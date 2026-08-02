@@ -32,8 +32,8 @@ Mirrors `Course/Exercises/Exercise 01.md`'s own numbering, with an added Stage 0
      - **Confirmed** by Peleg.
    - `SampleScene.unity` deleted, Build Settings fixed to reference `Scene_Physics.unity`.
      - **Confirmed done.** `Assets/Scenes/` now only contains `Scene_Physics.unity`; `EditorBuildSettings.asset` lists only `Scene_Physics.unity`.
-1. `[ ]` Coin-count GUI (already exists via `SC_CoinsManager` + `Txt_Coins`); confirm it still works after Stage 0 changes.
-2. `[ ]` Pickable Axe: collectible axes, GUI shows count, GUI updates when Mario throws one.
+1. `[x]` Coin-count GUI (already exists via `SC_CoinsManager` + `Txt_Coins`); confirmed still working after Stage 0 changes (the `Coins Text` serialized-field rewiring included).
+2. `[~]` Pickable Axe: collectible axes, GUI shows count, GUI updates when Mario throws one. Starting prompt written for a fresh conversation to tackle this stage; also where the Stage 0-deferred `WeaponsHandler.index` fix belongs (axe currently unreachable via Left-Ctrl at all - see Decisions Log).
 3. `[ ]` Lives/"strikes" system: start with 3, lose one per death, restart the game at 0.
 4. `[ ]` Pickable Strike: an extra-life pickup.
 5. `[ ]` Strikes-remaining GUI.
@@ -77,7 +77,7 @@ _(build this up per stage, so recording at the end is just following a checklist
 - For each requirement, plan to show: (a) the relevant code briefly, (b) it actually running/working in Play mode.
 - Per-stage capture notes:
   - Stage 0: not a graded item on its own, nothing needs its own segment. Optional: a line in the narration noting the `SC_` prefix is kept intentionally (pre-SOLID legacy scripts) rather than an oversight.
-  - Coin GUI:
+  - Coin GUI: works as inherited from Lesson 4, confirmed after Stage 0's `Coins Text` rewiring - show the counter incrementing as coins are collected.
   - Pickable Axe + GUI:
   - Lives/Strikes system:
   - Pickable Strike:
