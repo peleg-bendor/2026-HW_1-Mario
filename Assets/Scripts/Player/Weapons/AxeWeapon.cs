@@ -10,7 +10,7 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
     {
         if (projectile != null && _loaded)
         {
-            GameObject curProjectile = Instantiate(projectile, transform.position, new Quaternion(0, 0, 0, 0));
+            GameObject curProjectile = Instantiate(projectile, transform.position, Quaternion.identity);
             ProjectileAxe scProjectile =  curProjectile.GetComponent<ProjectileAxe>();
             if(scProjectile != null)
             {
@@ -20,6 +20,11 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
                 scProjectile.Attack(direction);
             }
             _loaded = false;
+            Debug.Log("Axe thrown");
+        }
+        else
+        {
+            Debug.Log("Axe attack ignored - not loaded");
         }
     }
 

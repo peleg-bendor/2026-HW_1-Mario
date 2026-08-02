@@ -38,6 +38,7 @@ public class PlayerJump  : MonoBehaviour
         {
             rigid.AddForce(new Vector2(0, jumpSpeed));
             isJumping = true;
+            Debug.Log("Mario jumped");
         }
     }
 

@@ -22,9 +22,9 @@ public class TempInit : MonoBehaviour
 
     void Update()
     {
-         if (Keyboard.current != null && axeWeapon != null)
+        if (Keyboard.current != null && axeWeapon != null)
         {
-            if (Keyboard.current.qKey.isPressed)
+            if (Keyboard.current.qKey.wasPressedThisFrame)
                 axeWeapon.Reload();
         }
     }

@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class SC_CoinsManager : MonoBehaviour
 {
+    [SerializeField] private TextMeshProUGUI coinsText;
+
     private int coins = 0;
 
     private void OnEnable()
@@ -21,7 +23,8 @@ public class SC_CoinsManager : MonoBehaviour
     private void OnCoinCollision()
     {
         coins++;
-        GameObject.Find("Txt_Coins").GetComponent<TextMeshProUGUI>().text = "Coins: " + coins.ToString();
+        if (coinsText != null)
+            coinsText.text = "Coins: " + coins.ToString();
     }
 
 }

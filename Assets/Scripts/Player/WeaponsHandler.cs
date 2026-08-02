@@ -14,8 +14,14 @@ public class WeaponsHandler : MonoBehaviour
 
     public void AddWeapon(IWeapon weapon)
     {
+        if (weapon == null)
+            return;
+
         if(!weapons.Contains(weapon))
+        {
             weapons.Add(weapon);
+            Debug.Log("Weapon registered: " + weapon.GetType().Name);
+        }
     }
 
     void Update()
@@ -23,7 +29,7 @@ public class WeaponsHandler : MonoBehaviour
         if (Keyboard.current == null)
             return;
 
-        if(Keyboard.current.leftCtrlKey.wasPressedThisFrame && weapons != null && weapons.Count >= 0 && index < weapons.Count)
+        if(Keyboard.current.leftCtrlKey.wasPressedThisFrame && weapons != null && index < weapons.Count)
             weapons[index].Attack();
     }
 }

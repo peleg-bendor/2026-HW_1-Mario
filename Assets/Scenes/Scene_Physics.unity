@@ -447,6 +447,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -982,6 +983,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fb1cf0aa07ce594c94a84f807cec148, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  coinsText: {fileID: 1395678566}
 --- !u!1001 &920579907
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1342,7 +1344,7 @@ GameObject:
   m_IsActive: 1
 --- !u!212 &1188005388
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1399,6 +1401,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!4 &1188005389
 Transform:
   m_ObjectHideFlags: 0
@@ -2246,7 +2249,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
 --- !u!212 &4197610236812962185
 SpriteRenderer:
-  serializedVersion: 2
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2303,6 +2306,7 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
 --- !u!4 &4699921166510164118
 Transform:
   m_ObjectHideFlags: 0

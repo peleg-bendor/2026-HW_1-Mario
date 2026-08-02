@@ -21,5 +21,6 @@ public class PlayerDeath : MonoBehaviour
     private void OnSpikeCollision()
     {
         transform.position = startPosition;
+        Debug.Log("Mario respawned at start position");
     }
 }

@@ -9,7 +9,7 @@ public class FireballWeapon : MonoBehaviour,IUseableWeapon
     {
         if (projectile != null && _isEquip)
         {
-            GameObject curProjectile = Instantiate(projectile, transform.position, new Quaternion(0, 0, 0, 0));
+            GameObject curProjectile = Instantiate(projectile, transform.position, Quaternion.identity);
             ProjectileFireball scProjectile =  curProjectile.GetComponent<ProjectileFireball>();
             if(scProjectile != null)
             {
@@ -18,6 +18,11 @@ public class FireballWeapon : MonoBehaviour,IUseableWeapon
                     direction = transform.parent.localScale.x;
                 scProjectile.Attack(direction);
             }
+            Debug.Log("Fireball shot");
+        }
+        else
+        {
+            Debug.Log("Fireball attack ignored - not equipped");
         }
     }
 
