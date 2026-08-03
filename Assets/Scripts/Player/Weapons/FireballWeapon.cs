@@ -35,4 +35,9 @@ public class FireballWeapon : MonoBehaviour,IUseableWeapon
     {
         _isEquip = false;
     }
+    
+    public bool IsAvailable()
+    {
+        return _isEquip;
+    }
 }

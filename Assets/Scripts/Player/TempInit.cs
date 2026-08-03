@@ -13,19 +13,10 @@ public class TempInit : MonoBehaviour
     {
         if(weaponsHandler != null)
         {
-            if(fireballWeapon != null)
-                weaponsHandler.AddWeapon(fireballWeapon);
-            if(axeWeapon != null)
+            if (axeWeapon != null)
                 weaponsHandler.AddWeapon(axeWeapon);
+            if (fireballWeapon != null)
+                weaponsHandler.AddWeapon(fireballWeapon);
         }   
-    }
-
-    void Update()
-    {
-        if (Keyboard.current != null && axeWeapon != null)
-        {
-            if (Keyboard.current.qKey.wasPressedThisFrame)
-                axeWeapon.Reload();
-        }
     }
 }

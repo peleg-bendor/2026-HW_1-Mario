@@ -33,4 +33,9 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
         Debug.Log("Reloading Axe"); 
         _loaded = true;
     }
+
+    public bool IsAvailable()
+    {
+        return true;
+    }
 }
