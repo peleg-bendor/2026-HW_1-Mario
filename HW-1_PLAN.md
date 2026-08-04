@@ -147,9 +147,15 @@ An extra-life pickup.
 
 **Confirmed working** by Peleg via `OutputLogsTemp.txt`: both paths traced through cleanly — a pickup below the cap logs `"Strike gained - N remaining"`, a pickup at the cap logs `"Strike pickup ignored - already at max (3)"` instead, and a full 3-strike death sequence still ends in a clean reload, all with no Console errors. `Sprite_Strike`'s oversized-import issue (455px source image at the default 100 Pixels Per Unit) got sorted out along the way — fixed via the sprite's `Pixels Per Unit` import setting, not the Transform or Sprite Renderer.
 
-### Stage 5 — Strikes-remaining GUI `[ ]`
+### Stage 5 — Strikes-remaining GUI `[x]`
 
 Show the current strike count on screen.
+
+#### Step 1 — `StrikeCountManager` `[x]`
+
+New manager mirroring `AxeCountManager` exactly + new `Txt_Strikes` TMP text under `Canvas` (positioned under `Txt_Axes`), subscribed to `StrikesManager.OnStrikeCountChanged`.
+
+**Confirmed working** by Peleg via `OutputLogsTemp.txt` and in the Game view: `Txt_Strikes` tracks strike loss, strike gain, and the post-reload reset back to 3, all with no Console errors.
 
 ### Stage 6 — Simple moving enemy `[ ]`
 
@@ -236,7 +242,7 @@ _(build this up per stage, so recording at the end is just following a checklist
     - Stage 2.5: not a graded item on its own, nothing needs its own segment. The tighter jump, throw, and running feel plus the bigger map will just be visible naturally throughout whatever stage segments get recorded.
     - Lives/Strikes system:
     - Pickable Strike: show `Sprite_Strike` in the level; lose a strike, then walk into the pickup and show the Console's `"Strike gained - N remaining"`; show the cap by collecting one while already at 3 (`"...already at max (3)"`).
-    - Strikes GUI:
+    - Strikes GUI: show `Txt_Strikes` under `Txt_Axes`, updating live alongside the Lives/Strikes segment above — losing and gaining strikes, and resetting to 3 after a game-over reload.
     - Moving enemy:
     - Static enemy:
     - Key + Door:
