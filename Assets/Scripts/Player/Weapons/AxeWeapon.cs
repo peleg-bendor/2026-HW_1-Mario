@@ -2,13 +2,20 @@ using UnityEngine;
 
 public class AxeWeapon : MonoBehaviour,IReloadWeapon
 {
-    public GameObject projectile;
-    private bool _loaded = false;
+    public static event System.Action<int> OnAxeCountChanged;
 
+    public GameObject projectile;
+    private int axesHeld = 1;
+
+    void Start()
+    {
+        Debug.Log("Starting with " + axesHeld + " axe(s)");
+        OnAxeCountChanged?.Invoke(axesHeld);
+    }
 
     public void Attack()
     {
-        if (projectile != null && _loaded)
+        if (projectile != null && axesHeld > 0)
         {
             GameObject curProjectile = Instantiate(projectile, transform.position, Quaternion.identity);
             ProjectileAxe scProjectile =  curProjectile.GetComponent<ProjectileAxe>();
@@ -19,19 +26,21 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
                     direction = transform.parent.localScale.x;
                 scProjectile.Attack(direction);
             }
-            _loaded = false;
-            Debug.Log("Axe thrown");
+            axesHeld--;
+            Debug.Log("Axe thrown - " + axesHeld + " left");
+            OnAxeCountChanged?.Invoke(axesHeld);
         }
         else
         {
-            Debug.Log("Axe attack ignored - not loaded");
+            Debug.Log("Axe attack ignored - no axes held");
         }
     }
 
     public void Reload()
     {
-        Debug.Log("Reloading Axe"); 
-        _loaded = true;
+        axesHeld++;
+        Debug.Log("Axe gained - now holding " + axesHeld);
+        OnAxeCountChanged?.Invoke(axesHeld);
     }
 
     public bool IsAvailable()
