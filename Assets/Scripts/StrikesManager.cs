@@ -20,11 +20,13 @@ public class StrikesManager : MonoBehaviour
     private void OnEnable()
     {
         SC_Death.OnSpikeCollision += OnSpikeCollision;
+        StrikePowerUp.OnStrikeGained += OnStrikeGained;
     }
 
     private void OnDisable()
     {
         SC_Death.OnSpikeCollision -= OnSpikeCollision;
+        StrikePowerUp.OnStrikeGained -= OnStrikeGained;
     }
 
     private void Awake()
@@ -45,6 +47,21 @@ public class StrikesManager : MonoBehaviour
 
         if (strikesRemaining <= 0)
             strikesDepleted = true;
+    }
+
+    private void OnStrikeGained()
+    {
+        // Capped at startingStrikes rather than a separate hardcoded max - the ceiling
+        // is meant to match the starting amount, not some independent number.
+        if (strikesRemaining >= startingStrikes)
+        {
+            Debug.Log("Strike pickup ignored - already at max (" + startingStrikes + ")");
+            return;
+        }
+
+        strikesRemaining++;
+        Debug.Log("Strike gained - " + strikesRemaining + " remaining");
+        OnStrikeCountChanged?.Invoke(strikesRemaining);
     }
 
     private void Update()
