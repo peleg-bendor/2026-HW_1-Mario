@@ -29,14 +29,20 @@ public class PlayerJump  : MonoBehaviour
     
     private void OnFloorCollision()
     {
-        isJumping = false;
+        // Only a real state transition (was jumping, now grounded) is worth logging - SC_Floor
+        // calls this on every tile Mario walks over, and isJumping is already false for those.
+        if (isJumping)
+        {
+            Debug.Log("Mario landed on floor");
+            isJumping = false;
+        }
     }
 
     private void Jump()
     {
         if (isJumping == false)
         {
-            rigid.AddForce(new Vector2(0, jumpSpeed));
+            rigid.AddForce(new Vector2(0, jumpSpeed), ForceMode2D.Impulse);
             isJumping = true;
             Debug.Log("Mario jumped");
         }

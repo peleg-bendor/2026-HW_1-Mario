@@ -17,7 +17,7 @@ public class ProjectileFireball : MonoBehaviour
         if(rb != null)
         {
             transform.localScale = new Vector3(direction, 1, 1);
-            rb.AddForce(new Vector2(direction * speed, 0));
+            rb.AddForce(new Vector2(direction * speed, 0), ForceMode2D.Impulse);
             Destroy(gameObject, lifetime);
         }
     }

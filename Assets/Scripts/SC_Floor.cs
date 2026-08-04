@@ -9,7 +9,6 @@ public class SC_Floor : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        Debug.Log("OnCollisionEnter2D " + col.gameObject.name);
         if (col.gameObject.tag == "Player")
         {
             float _playerY = col.gameObject.transform.position.y;
@@ -24,7 +23,9 @@ public class SC_Floor : MonoBehaviour
 
             if (_playerY > _tileY + playerColliderHalfHeight)
             {
-                Debug.Log("Mario landed on floor");
+                // Fires on every tile Mario walks onto, not just real landings - the floor is
+                // 14 separate colliders, so crossing a tile boundary re-triggers this. Whether
+                // it's a real landing is PlayerJump's call, since it's the one tracking jump state.
                 if (OnFloorCollision != null)
                     OnFloorCollision();
             }
