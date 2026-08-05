@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 5826389429630916388}
   - component: {fileID: 4366248669930225695}
   - component: {fileID: 2852003687942470943}
+  - component: {fileID: 8423587144484600698}
   m_Layer: 0
   m_Name: Sprite_Ghost
   m_TagString: Untagged
@@ -188,3 +189,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3075fac5ae769c4bb5ed2a0d450f70c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SC_Death
+--- !u!114 &8423587144484600698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4975246851895860399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00386854fe2a62c47be65335c45a3c4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyHealth

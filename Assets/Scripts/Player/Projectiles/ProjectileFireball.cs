@@ -21,4 +21,14 @@ public class ProjectileFireball : MonoBehaviour
             Destroy(gameObject, lifetime);
         }
     }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        IEnemy enemy = other.GetComponent<IEnemy>();
+        if (enemy != null)
+        {
+            enemy.Kill();
+            Destroy(gameObject);
+        }
+    }
 }

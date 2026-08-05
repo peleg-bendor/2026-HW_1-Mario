@@ -177,13 +177,15 @@ New prefab (`SpriteRenderer` using the sourced ghost sprite, `Rigidbody2D` — d
 
 **Confirmed working** by Peleg via `OutputLogsTemp.txt`, after several real bugs surfaced and got fixed along the way (full list in the Decisions Log): patrols correctly, turns at wall faces, falls through and past ledges instead of getting stuck, and lands cleanly afterward.
 
-#### Step 4 — `IEnemy` / `EnemyHealth` `[ ]`
+#### Step 4 — `IEnemy` / `EnemyHealth` `[x]`
 
 New `IEnemy` interface (`Assets/Scripts/Interfaces/`) with a single `Kill()` method, deliberately narrow since "destroyed by a projectile" is the only trait actually shared by this stage's enemy and Stage 7's. New `EnemyHealth : MonoBehaviour, IEnemy` implements `Kill()` as `Destroy(gameObject)` plus a log, added to the `Sprite_Ghost` prefab alongside `EnemyMovement`/`SC_Death`.
 
-#### Step 5 — `ProjectileFireball` recognizes enemies `[ ]`
+#### Step 5 — `ProjectileFireball` recognizes enemies `[x]`
 
 `Fireball.prefab` currently has no `Collider2D` at all, so it can't detect anything it flies through. Adds a trigger `Collider2D` and a new `OnTriggerEnter2D` that checks the other object for `IEnemy` — if present, calls `Kill()` and destroys the fireball; otherwise ignores the collision entirely, so it keeps flying through terrain exactly like it does today, no behavior change there.
+
+**Confirmed working** by Peleg via `OutputLogsTemp.txt`. Two setup mistakes surfaced during testing before it worked, both worth knowing about: the new collider needs `Is Trigger` actually checked (left solid, the fireball physically bumps into walls and enemies and no trigger event ever fires), and `EnemyHealth` has to be on the prefab, which Step 4 specified but never got applied — with no `IEnemy` component anywhere on the ghost, the fireball's lookup correctly found nothing and passed straight through, silently and with no error.
 
 #### Step 6 — `ProjectileAxe` recognizes enemies `[ ]`
 
@@ -271,6 +273,9 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - Found and fixed a real bug during testing: an enemy walking off a platform edge got stuck hovering on the last tile's corner rather than falling or continuing. `FixedUpdate` zeroed horizontal velocity outright whenever `IsGrounded()` was `false`, but a collider whose center has just crossed a tile edge is still physically resting on that tile's corner - neither falling (still supported) nor moving (velocity forced to zero), a genuine deadlock. Fixed by only ever *driving* velocity while grounded and leaving it untouched while airborne, so existing momentum carries the enemy over the edge instead of pinning it there.
     - `Sprite_Ghost`'s `CircleCollider2D` radius ended up at `0.4` (matching `Axe.prefab`), not `0.5` - the level's gaps are exactly one tile (1.0 unit) wide, and a `0.5` radius means a `1.0` diameter, precisely as wide as the gap, so the enemy wedged into every single-tile hole instead of falling through it.
     - `SC_Coin` had the same stray unconditional `Debug.Log("OnTriggerEnter2D " + ...)` already removed from `SC_Death` (Step 1) and `SC_Floor` (Stage 2.5) - found while testing, since the ghost walks through coins on patrol and the leftover log fired every time. Fixed the same way.
+    - `EnemyMovement.IsGrounded()` was reworked a second time, from a downward raycast to reading `Collider2D.GetContacts()` directly. The raycast answered "is there ground below my centre?" while physics answered "is anything holding me up?", and those two disagree whenever a round collider rests on a tile's corner: physics refuses to let it fall, the script refuses to let it walk, and it hangs there permanently. Preserving momentum (see above) only rescued the case where the enemy *walked* off a ledge still carrying speed; an enemy that *lands* on a corner has its horizontal velocity killed by the impact and stayed stuck. Reading contacts removes the disagreement at the source rather than narrowing the window where it happens. The check uses `Mathf.Abs(normal.y)` deliberately, since it only needs to tell a floor contact from a wall contact and the absolute value makes that independent of which way round Unity reports the normal.
+    - The `Fireball` prefab's new `Collider2D` must have `Is Trigger` checked. Left solid, both it and the enemy's collider are solid, so Unity raises no trigger event at all and the fireball simply bumps into things physically - it visibly sticks to walls and shoves the enemy around instead of destroying it.
+    - `Canvas` and all four `Txt_` GUI objects were accidentally deleted mid-stage and rebuilt from scratch. The four manager scripts survived intact, so recovery was purely re-creating the TMP objects and re-assigning each manager's serialized field: `SC_CoinsManager.coinsText` → `Txt_Coins`, `SelectedWeaponManager.selectedWeaponText` → `Txt_SelectedWeapon`, `AxeCountManager.axeCountText` → `Txt_Axes`, `StrikeCountManager.strikesText` → `Txt_Strikes`. `Canvas` sits at the root of the Hierarchy, a sibling of `World`/`Scripts`/`Main Camera`/`EventSystem`, since screen-space UI isn't part of the game world. Anchors matter for positioning: new TMP objects default to a centre anchor, so Alt-clicking the top-left anchor preset is what makes the position values behave as "offset from the corner".
 
 ## Notes for the Video
 
