@@ -5,26 +5,24 @@ using UnityEngine.AI;
 
 public class SC_Death : MonoBehaviour
 {
-    public delegate void SpikeCollisionHandler();
-    public static event SpikeCollisionHandler OnSpikeCollision;
+    public delegate void HazardCollisionHandler();
+    public static event HazardCollisionHandler OnHazardCollision;
 
-    public delegate void SpikeCollisionGeneralHandler(GameObject _Collied);
-    public static event SpikeCollisionGeneralHandler OnSpikeCollisionGeneral;
-
+    public delegate void HazardCollisionGeneralHandler(GameObject collidedObject);
+    public static event HazardCollisionGeneralHandler OnHazardCollisionGeneral;
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        Debug.Log("OnCollisionEnter2D " + col.gameObject.name);
-        if(col.gameObject.tag == "Player")
+        if (col.gameObject.tag == "Player")
         {
-            Debug.Log("Mario hit spikes");
-            if (OnSpikeCollision != null)
-                OnSpikeCollision();
+            Debug.Log("Mario hit hazard: " + gameObject.name);
+            if (OnHazardCollision != null)
+                OnHazardCollision();
         }
         else
         {
-            if (OnSpikeCollisionGeneral != null)
-                OnSpikeCollisionGeneral(col.gameObject);
+            if (OnHazardCollisionGeneral != null)
+                OnHazardCollisionGeneral(col.gameObject);
         }
     }
 }

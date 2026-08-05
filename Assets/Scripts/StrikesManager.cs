@@ -11,7 +11,7 @@ public class StrikesManager : MonoBehaviour
 
     // Set true the instant strikes hit 0. The actual scene reload happens in Update(),
     // not here - SceneManager.LoadScene() is blocking, and PlayerDeath is an independent
-    // subscriber to the same OnSpikeCollision event with no guaranteed order against this
+    // subscriber to the same OnHazardCollision event with no guaranteed order against this
     // one. Reloading inline could tear down the scene mid-dispatch and throw a
     // MissingReferenceException if PlayerDeath's handler ran after this one. Deferring to
     // Update() guarantees every subscriber for this hit has already run first.
@@ -19,13 +19,13 @@ public class StrikesManager : MonoBehaviour
 
     private void OnEnable()
     {
-        SC_Death.OnSpikeCollision += OnSpikeCollision;
+        SC_Death.OnHazardCollision += OnHazardCollision;
         StrikePowerUp.OnStrikeGained += OnStrikeGained;
     }
 
     private void OnDisable()
     {
-        SC_Death.OnSpikeCollision -= OnSpikeCollision;
+        SC_Death.OnHazardCollision -= OnHazardCollision;
         StrikePowerUp.OnStrikeGained -= OnStrikeGained;
     }
 
@@ -39,7 +39,7 @@ public class StrikesManager : MonoBehaviour
         OnStrikeCountChanged?.Invoke(strikesRemaining);
     }
 
-    private void OnSpikeCollision()
+    private void OnHazardCollision()
     {
         strikesRemaining--;
         Debug.Log("Strike lost - " + strikesRemaining + " remaining");

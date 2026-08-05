@@ -6,19 +6,19 @@ public class PlayerDeath : MonoBehaviour
 
     private void OnEnable()
     {
-        SC_Death.OnSpikeCollision += OnSpikeCollision;
+        SC_Death.OnHazardCollision += OnHazardCollision;
     }
 
     private void OnDisable()
     {
-        SC_Death.OnSpikeCollision -= OnSpikeCollision;
+        SC_Death.OnHazardCollision -= OnHazardCollision;
     }
     void Awake()
     {
         startPosition = transform.position;
     }
 
-    private void OnSpikeCollision()
+    private void OnHazardCollision()
     {
         transform.position = startPosition;
         Debug.Log("Mario respawned at start position");
