@@ -657,7 +657,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &203705169
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1776,7 +1776,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &531094874
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4620,7 +4620,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1573804410}
-  - {fileID: 1711471333}
   m_Father: {fileID: 1887416126}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1321184084
@@ -4755,63 +4754,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5467311013064111145, guid: 7658296e42991b348a20b02c6e24bd34, type: 3}
   m_PrefabInstance: {fileID: 1322801184}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &1338428805
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1319880568}
-    m_Modifications:
-    - target: {fileID: 4975246851895860399, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_Name
-      value: Sprite_Ghost_2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 8.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: df7d574aa85474748a816b7933c509c1, type: 3}
 --- !u!1001 &1364058281
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5884,11 +5826,6 @@ Transform:
   - {fileID: 1681990189}
   m_Father: {fileID: 869798214}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &1711471333 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
-  m_PrefabInstance: {fileID: 1338428805}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1733934294
 GameObject:
   m_ObjectHideFlags: 0
@@ -5950,7 +5887,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1744531114
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6351,7 +6288,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1868975534
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6921,11 +6858,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4975246851895860399, guid: df7d574aa85474748a816b7933c509c1, type: 3}
       propertyPath: m_Name
-      value: Sprite_Ghost_1
+      value: Sprite_Ghost
       objectReference: {fileID: 0}
     - target: {fileID: 4975246851895860399, guid: df7d574aa85474748a816b7933c509c1, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7247110220868310912, guid: df7d574aa85474748a816b7933c509c1, type: 3}
       propertyPath: m_LocalPosition.x

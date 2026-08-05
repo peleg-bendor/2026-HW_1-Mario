@@ -17,6 +17,14 @@ public class EnemyMovement : MonoBehaviour
     // How far past the collider's own edge to look for a wall ahead.
     [SerializeField] private float wallCheckBuffer = 0.1f;
 
+    // How long ground contact has to stay missing before the enemy counts as airborne. The floor
+    // is ~90 separate 1x1 tile colliders rather than one surface, and a round collider crossing a
+    // seam loses its contact (or gets a briefly tilted normal) for a physics step or two while
+    // the solver hands it from one tile to the next. Trusting a single frame's answer therefore
+    // produced constant false "falling" reports on perfectly flat ground. A real fall lasts far
+    // longer than a seam glitch, so waiting this long tells them apart.
+    [SerializeField] private float groundLossGrace = 0.15f;
+
     // A floor contact pushes back along Y, a wall contact along X, so this only has to tell the
     // two apart. 0.5 puts the cutoff at 60 degrees off vertical, which keeps corner contacts on
     // the "standing on it" side where they belong.
@@ -29,6 +37,8 @@ public class EnemyMovement : MonoBehaviour
     private Rigidbody2D rb;
     private Collider2D col;
     private float facingDirection;
+
+    private float timeSinceGroundContact = 0f;
 
     private bool wasGrounded;
     private bool groundStateKnown = false;
@@ -60,7 +70,12 @@ public class EnemyMovement : MonoBehaviour
         if (rb == null || col == null)
             return;
 
-        bool grounded = IsGrounded();
+        if (HasGroundContact())
+            timeSinceGroundContact = 0f;
+        else
+            timeSinceGroundContact += Time.fixedDeltaTime;
+
+        bool grounded = timeSinceGroundContact < groundLossGrace;
         ReportGroundChange(grounded);
 
         if (grounded && IsWallAhead())
@@ -80,8 +95,9 @@ public class EnemyMovement : MonoBehaviour
     // from the centre stops finding ground the moment the enemy's middle passes a tile edge, yet
     // the collider can still be resting on that tile's corner. An enemy that physics is holding
     // up while this script believes it is falling gets stuck: too supported to drop, too
-    // "airborne" to walk. Asking physics directly means the two can never disagree.
-    private bool IsGrounded()
+    // "airborne" to walk. This answers only for the current instant, so FixedUpdate smooths it
+    // over groundLossGrace before acting on the result.
+    private bool HasGroundContact()
     {
         int contactCount = col.GetContacts(contacts);
 
@@ -145,7 +161,12 @@ public class EnemyMovement : MonoBehaviour
             return;
 
         wasGrounded = grounded;
-        Debug.Log(grounded ? "Enemy landed - resuming patrol" : "Enemy left the ground - falling");
+
+        // Named, because more than one enemy can be patrolling at once and the Console gives no
+        // other way to tell which one this is.
+        Debug.Log(grounded
+            ? "Enemy landed - resuming patrol: " + gameObject.name
+            : "Enemy left the ground - falling: " + gameObject.name);
     }
 
     private void UpdateSpriteFacing()
