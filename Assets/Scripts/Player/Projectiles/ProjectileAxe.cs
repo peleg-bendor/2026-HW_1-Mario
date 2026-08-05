@@ -51,10 +51,19 @@ public class ProjectileAxe : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        Debug.Log("OnCollisionEnter2D " + col.gameObject.name);
-
         if (!hasLanded)
         {
+            // Checked before the landing branch below, because an enemy is something a thrown axe
+            // destroys in flight rather than a surface it comes to rest on. Without this the
+            // "anything that isn't the Player is the floor" rule underneath would claim it first.
+            IEnemy enemy = col.gameObject.GetComponent<IEnemy>();
+            if (enemy != null)
+            {
+                enemy.Kill();
+                Destroy(gameObject);
+                return;
+            }
+
             if (col.gameObject.tag != "Player")
             {
                 Debug.Log("Axe landed");
