@@ -29,6 +29,15 @@ public class ProjectileFireball : MonoBehaviour
         {
             enemy.Kill();
             Destroy(gameObject);
+            return;
+        }
+
+        // SC_Floor marks an actual tile - the only other thing a fireball stops for.
+        // Everything else (coins, pickups, Mario himself) it flies straight through.
+        if (other.GetComponent<SC_Floor>() != null)
+        {
+            Debug.Log("Fireball hit a wall");
+            Destroy(gameObject);
         }
     }
 }
