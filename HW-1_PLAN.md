@@ -15,7 +15,7 @@ Shared working notes for building Exercise 1. The assistant may edit this file d
 
 ## Stage Order
 
-Mirrors `Course/Exercises/Exercise 01.md`'s own numbering, with an added Stage 0 for cleanup/setup before any new feature work, and an added Stage 2.5 side-step (like Stage 0, not part of the exercise's own numbering) once Stage 2 surfaced things worth fixing before building further on top of them.
+Mirrors `Course/Exercises/Exercise 01.md`'s own numbering, with a few added side-steps that aren't part of the exercise's own numbering: Stage 0 for cleanup/setup before any new feature work, Stage 2.5 once Stage 2 surfaced things worth fixing before building further on top of them, and Stage 10 (Game over / Game won GUI - Peleg's own addition, not asked for in the exercise text) inserted after Stage 9 and before the exercise's own bonus item. That pushes the bonus spawner to Stage 11, and adds two closing stages that aren't feature work at all: Stage 12 for a final jump-feel tuning pass plus one last full test, and Stage 13 for writing the video script.
 
 ### Stage 0 — Clean up & steady base `[x]`
 
@@ -261,13 +261,71 @@ Confirm walking through the gateway before collecting the key does nothing at al
 
 **Confirmed working** by Peleg via `OutputLogsTemp.txt`, across two separate playtests: the full key → portal → "game won" → reload sequence traced cleanly, and a second run covering the rest of the game (axes, coins, fire flower, both enemies, a full 2-strike hazard sequence) alongside it with no regressions and no Console errors anywhere in either log.
 
-### Stage 9 — Final assembled level `[ ]`
+### Stage 9 — Final assembled level `[x]`
 
-Combining everything, with the camera following Mario.
+Camera follows Mario on both axes. Confirmed directly from the scene file before writing any
+code: every mechanic from Stages 1-8 already has exactly one instance placed in the map (a
+roughly 17x9 unit space, full-width ground strip at Y=-1, platforms stepping up to Y=8) - so
+this stage is mostly about wiring the camera, then confirming the whole thing plays as one
+path start to finish.
 
-### Stage 10 — Bonus: enemy spawner `[ ]`
+#### Step 1 — `CameraFollow` `[x]`
+
+New script (`Assets/Scripts/`, alongside `StrikesManager`/`Gateway`/`Portal` - attached
+directly to `Main Camera` itself, not a `Scripts`-folder manager, matching how `Gateway`/
+`Portal` attach to their own placed objects rather than a manager pattern). Reads a
+`[SerializeField] Transform target` (assigned to `Sprite_Mario`) and follows it on both X and
+Y every `LateUpdate`, smoothed via `Vector3.SmoothDamp` instead of snapping straight to
+Mario's position, with `smoothTime` exposed as a serialized field instead of hardcoded.
+Preserves the camera's own starting Z (read once in `Awake`, not hardcoded to `-10`) so depth
+is untouched. Follows freely with no level-bounds clamping - Peleg's call, in scope for a
+basic level.
+
+No World-offset special-casing needed: `Transform.position` is always world-space regardless
+of parenting, so reading Mario's live position already accounts for `World`'s `X +0.5` shift
+automatically. This resolves the Stage 2.5 note about the camera sitting off from the level,
+without any Hierarchy change - `Main Camera` stays at the root, unparented, matching its
+existing spot as a sibling of `World`/`Canvas`/`Scripts`.
+
+**Confirmed working** by Peleg: "very nice feel."
+
+#### Step 2 — Core mechanic playtest `[x]`
+
+Full playthrough from Mario's start position to the gateway/portal, camera following the
+whole way. Confirm every mechanic from Stages 1-8 still works together in the assembled
+level: coins, axe pickup/throw/land/reclaim, weapon switching, strikes lost/gained, both
+enemies (patrol/touch/kill-by-projectile), key pickup, and the portal ending the level. Also
+confirm the camera itself: smooth follow on both axes, no jitter, and how it looks near the
+level's edges given free-follow (expected to show some space past the tiles at the corners -
+not a bug, that's what "follow freely" means here).
+
+**Confirmed working** by Peleg via `OutputLogsTemp.txt`: one continuous playthrough from
+start to the portal, covering coins, the fire flower and weapon switch, axe pickup/throw/
+reclaim (`axesHeld` tracked correctly through the pickups, up to 2 then 3), a strike gained
+and correctly capped at the max of 3, the ghost turning around at a wall and dying to a
+fireball, the vampire firing garlic both directions and dying to a fireball, garlic and
+Mario's own fireball both stopping dead at walls, the key collected and the gateway lighting
+up, and finally `"Mario reached the portal"` / `"Game won - restarting"` followed by a clean
+reload (`"Starting with 1 axe(s)"` right after, same as every other reload). No Console
+errors anywhere in the log.
+
+### Stage 10 — Game over / Game won signaling `[ ]`
+
+Plain on-screen text for 1 second: red "GAME OVER" on death, green "GAME WON" on reaching
+the active portal. Not asked for in the exercise text - Peleg's own addition.
+
+### Stage 11 — Bonus: enemy spawner `[ ]`
 
 Destroyed enemies respawn after X seconds.
+
+### Stage 12 — Final jump tuning & full test `[ ]`
+
+A final pass on Mario's jump feel, plus one last complete playthrough before recording.
+
+### Stage 13 — Video script `[ ]`
+
+Write out the recording script/checklist covering every requirement, per the submission
+rules below.
 
 ## Notes / Decisions Log
 
@@ -363,6 +421,12 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - The gate stays passable in both directions and isn't a locked door in the traditional sense, on purpose - the exercise only specifies "nothing happens" without the key, not that Mario is physically blocked, and a toggle-solid-collider locked door would be solving a requirement that wasn't asked for.
     - Found a real bug during Step 3's testing: collecting the key logged both `"Gateway lit up - key collected"` and a `"Gateway has no portal assigned"` warning from the same pickup. `KeyPickupController.OnKeyCollected` is a static event, so every subscribed `Gateway` reacts to it, not just the one Mario's near - and reading `Scene_Physics.unity` directly turned up a second `Gateway` component sitting on `Canvas`, `portal` field unassigned (`fileID: 0`), unrelated to the actual `Sprite_Gateway` prefab instance's own correctly-wired one. Almost certainly `Canvas` was the active Hierarchy selection by accident when "Add Component -> Gateway" was used during Step 2. Fixed by removing that stray component from `Canvas`; no code changes involved.
     - Sprite asset naming ended up not matching the `Sprite_X.png` convention documented for placed-in-level art: the sourced files are `Gateway.png` and `Portal.PNG` (no `Sprite_` prefix, and the portal one has an uppercase extension). Harmless functionally - Unity references sprites by GUID, not filename - but worth naming as a known inconsistency, the same spirit as the `SC_` prefix note from Stage 0, rather than silently leaving it unexplained. Not renamed, Peleg's call.
+- Stage 9 design decisions (Final assembled level / camera follow):
+    - Before writing any code, read the scene file directly (not the Scene view, since the assistant can't touch the Editor) to confirm the level was already assembled rather than needing to be built from scratch: every mechanic from Stages 1-8 had exactly one instance placed in a roughly 17x9 unit map, no duplicates, no strays outside `World` (checked `Canvas` and scene root specifically for a repeat of the Stage 8 stray-`Gateway` bug - clean this time). So this stage ended up being camera work plus one full-level playtest, not new level-building.
+    - The Stage 2.5 worry about the camera sitting `0.5` off from the level (since `Main Camera` isn't a child of `World`) turned out to be a non-problem once real follow logic exists: `Transform.position` is always world-space regardless of parenting, so a script reading Mario's live position already has `World`'s `X +0.5` shift baked in. No reparenting needed, no hardcoded offset to keep in sync - `Main Camera` stays at the root, matching its existing spot as a sibling of `World`/`Canvas`/`Scripts`.
+    - `CameraFollow` follows both X and Y (the level has real verticality, platforms up to Y=8, so X-only would let Mario climb off the top of the frame), smoothed via `Vector3.SmoothDamp` rather than snapping, with `smoothTime` exposed as a serialized field instead of hardcoded. Follows freely with no level-bounds clamping - Peleg's call, in scope for a basic level; the edges will show some space past the tiles when Mario's near a corner, and that's accepted as what "follow freely" means rather than something to fix.
+    - Noticed before touching anything: the old fixed camera (position `6,4,-10`, orthographic size `5`) was already sized and centered close enough to the level's actual footprint that it was showing almost the entire map at once, not a close shot near Mario's start. Flagged this since a follow-cam at that same zoom would barely visibly move, which would undercut demonstrating "camera follows Mario" on video. Recommended tightening the orthographic size as a Play-mode tuning pass, same as the Stage 2.5 physics-feel numbers - Peleg tried a lower value and confirmed "very nice feel."
+    - No new SOLID material in this stage - `CameraFollow` is a single-purpose class (SRP) with no second implementation to justify an interface, same reasoning as `EnemyRangedAttack` in Stage 7. Agreed with Peleg not to force an OCP/LSP/ISP/DIP angle here; the video's SOLID coverage points back to what earlier stages already demonstrated.
 
 ## Notes for the Video
 
@@ -381,5 +445,6 @@ _(build this up per stage, so recording at the end is just following a checklist
     - Moving enemy: show it patrolling using the level's actual platform edges/walls, not a fixed distance; show it turning around at a wall face and falling off a ledge; show it costing a strike on touch (Console: `"Mario hit hazard: Sprite_Ghost"`, `"Strike lost - N remaining"`) while other ghosts keep patrolling undisturbed; show it destroyed by both a thrown axe and a fireball (`"Enemy destroyed: ..."`). Worth narrating the ISP point on `IEnemy` staying to just `Kill()`: it only ever covers "destroyed by a projectile," so touch damage is a separate, optional `SC_Death` attachment that both this enemy and Stage 7's vampire opt into independently. Also worth calling out that a landed axe becomes a solid obstacle the ghost bumps into, so it reads as intentional rather than a glitch.
     - Static enemy: show the vampire standing still and alternating garlic left/right on a fixed interval; show a garlic hit costing a strike, separately from touching the vampire directly also costing one; show it destroyed by a thrown axe or a fireball, same as the ghost; show garlic and Mario's own fireball both stopping dead at a wall instead of flying through, while still passing straight through a coin or other pickup. Worth narrating the OCP point: `EnemyHealth` and both projectiles' `IEnemy` checks needed zero changes to support a second enemy type, and `SC_Death` gaining trigger support extends it without touching its two existing subscribers or the ghost/spikes' existing behavior.
     - Key + Door: show the gateway with the portal off, and Mario walking straight through it with nothing happening; show `Sprite_Key` collected somewhere else in the level; show the portal turning on the moment the key's collected; show walking into the portal logging "game won" and restarting the game. Worth narrating the SRP point on splitting `Gateway`/`Portal` into two classes along the same line the collider setup already draws (react-to-key vs. detect-Mario), and the choice not to route the key through `IPowerUp` since it isn't a power-up.
-    - Final level + camera follow:
+    - Final level + camera follow: show the camera tracking Mario on both axes across the level's platforms - flat ground, the staircase climbs on the left and right ends, the two big elevated shelves - and confirm it stays smooth rather than snapping. Worth narrating that this is a genuinely assembled level, not a fresh test scene: every mechanic from every earlier stage already lives in this one map. Worth noting `CameraFollow` as a small, single-purpose SRP example, and that the World-offset issue flagged back in Stage 2.5 resolved itself once the camera reads Mario's live position instead of a fixed number.
+    - Game over / Game won GUI:
     - Bonus spawner:
