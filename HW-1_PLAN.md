@@ -243,9 +243,11 @@ New script (`Player/Pickable/`), modeled on `SC_Coin`/`SC_Death` rather than the
 
 **Confirmed working** by Peleg: walking into `Sprite_Key` collects it and logs `"Key collected"`.
 
-#### Step 2 — `Gateway` reacts to the key `[ ]`
+#### Step 2 — `Gateway` reacts to the key `[x]`
 
 New script (`Assets/Scripts/` root, alongside `StrikesManager.cs`), attached to a new `Sprite_GateWay` prefab. Subscribes to `KeyPickupController.OnKeyCollected`; the only thing it does on that event is activate a nested `Sprite_Portal` child object (starts inactive in the prefab). No collider on the gateway itself - Mario walks straight through it, key or no key, until the portal turns on.
+
+**Confirmed working** by Peleg: `Sprite_GateWay`/`Sprite_Portal` placed and wired, portal sprite sorts behind the gateway via `Order in Layer` (gateway `0`, portal `-1`).
 
 #### Step 3 — `Portal` ends the level `[ ]`
 
