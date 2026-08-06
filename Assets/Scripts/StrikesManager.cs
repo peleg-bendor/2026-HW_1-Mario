@@ -1,21 +1,20 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class StrikesManager : MonoBehaviour
 {
     public static event System.Action<int> OnStrikeCountChanged;
 
+    // Raised the instant strikes hit 0. GameEndManager is the only subscriber, and it
+    // doesn't reload the scene until its own display timer runs out - so unlike the old
+    // deferred-to-Update() flag this replaced, firing this inline is safe even though
+    // PlayerDeath is an independent subscriber to the same OnHazardCollision event with
+    // no guaranteed order against this one: nothing here calls SceneManager.LoadScene(),
+    // so there's nothing left to race.
+    public static event System.Action OnGameOver;
+
     [SerializeField] private int startingStrikes = 3;
 
     private int strikesRemaining;
-
-    // Set true the instant strikes hit 0. The actual scene reload happens in Update(),
-    // not here - SceneManager.LoadScene() is blocking, and PlayerDeath is an independent
-    // subscriber to the same OnHazardCollision event with no guaranteed order against this
-    // one. Reloading inline could tear down the scene mid-dispatch and throw a
-    // MissingReferenceException if PlayerDeath's handler ran after this one. Deferring to
-    // Update() guarantees every subscriber for this hit has already run first.
-    private bool strikesDepleted = false;
 
     private void OnEnable()
     {
@@ -46,7 +45,7 @@ public class StrikesManager : MonoBehaviour
         OnStrikeCountChanged?.Invoke(strikesRemaining);
 
         if (strikesRemaining <= 0)
-            strikesDepleted = true;
+            OnGameOver?.Invoke();
     }
 
     private void OnStrikeGained()
@@ -62,14 +61,5 @@ public class StrikesManager : MonoBehaviour
         strikesRemaining++;
         Debug.Log("Strike gained - " + strikesRemaining + " remaining");
         OnStrikeCountChanged?.Invoke(strikesRemaining);
-    }
-
-    private void Update()
-    {
-        if (strikesDepleted)
-        {
-            Debug.Log("Game over - restarting");
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
     }
 }
