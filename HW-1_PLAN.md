@@ -233,7 +233,7 @@ Confirm the vampire stands still and alternates firing garlic left/right on a st
 
 **Confirmed working** by Peleg via `OutputLogsTemp.txt`, one continuous session covering everything above plus a full game-over/restart cycle: the vampire alternates garlic left/right on schedule, a garlic hit and a direct vampire touch each cost exactly one strike, both the axe and the fireball destroy the vampire (and, re-tested after the restart, the ghost too), garlic and fireball both stop dead at walls (`"Garlic hit a wall"` / `"Fireball hit a wall"`) while coins, axe pickups, the fire flower, and the strike pickup are all still collected normally by Mario walking through them, and a three-strike death against spikes reloads the scene cleanly with everything - weapons, enemies, pickups - back to its starting state. No Console errors anywhere in the log.
 
-### Stage 8 — Level-end flow `[~]`
+### Stage 8 — Level-end flow `[x]`
 
 A Key pickup + a Door that only ends the level if the key was collected.
 
@@ -245,17 +245,21 @@ New script (`Player/Pickable/`), modeled on `SC_Coin`/`SC_Death` rather than the
 
 #### Step 2 — `Gateway` reacts to the key `[x]`
 
-New script (`Assets/Scripts/` root, alongside `StrikesManager.cs`), attached to a new `Sprite_GateWay` prefab. Subscribes to `KeyPickupController.OnKeyCollected`; the only thing it does on that event is activate a nested `Sprite_Portal` child object (starts inactive in the prefab). No collider on the gateway itself - Mario walks straight through it, key or no key, until the portal turns on.
+New script (`Assets/Scripts/` root, alongside `StrikesManager.cs`), attached to a new `Sprite_Gateway` prefab. Subscribes to `KeyPickupController.OnKeyCollected`; the only thing it does on that event is activate a nested `Sprite_Portal` child object (starts inactive in the prefab). No collider on the gateway itself - Mario walks straight through it, key or no key, until the portal turns on.
 
-**Confirmed working** by Peleg: `Sprite_GateWay`/`Sprite_Portal` placed and wired, portal sprite sorts behind the gateway via `Order in Layer` (gateway `0`, portal `-1`).
+**Confirmed working** by Peleg: `Sprite_Gateway`/`Sprite_Portal` placed and wired, portal sprite sorts behind the gateway via `Order in Layer` (gateway `0`, portal `-1`).
 
-#### Step 3 — `Portal` ends the level `[ ]`
+#### Step 3 — `Portal` ends the level `[x]`
 
 New script (`Assets/Scripts/` root), attached to the nested `Sprite_Portal` child. Owns the trigger collider Mario actually reaches; `OnTriggerEnter2D` checks the `Player` tag, logs "game won", and defers `SceneManager.LoadScene()` to `Update()` the same way `StrikesManager` does. No `hasKey` check needed anywhere - the portal can't be touched before `Gateway` activates it, so "nothing happens without the key" falls out of the GameObject being inactive rather than a conditional in code.
 
-#### Step 4 — Core mechanic playtest `[ ]`
+**Confirmed working** by Peleg via `OutputLogsTemp.txt`: `"Mario reached the portal"` followed by `"Game won - restarting"`, then a clean scene reload (`"Starting with 1 axe(s)"` right after, same as every other reload).
+
+#### Step 4 — Core mechanic playtest `[x]`
 
 Confirm walking through the gateway before collecting the key does nothing at all; confirm the key can be collected anywhere in the level; confirm the portal appears the moment it's collected; confirm walking into the portal logs "game won" and restarts the game; confirm nothing else (strikes, weapons, other pickups) regressed.
+
+**Confirmed working** by Peleg via `OutputLogsTemp.txt`, across two separate playtests: the full key → portal → "game won" → reload sequence traced cleanly, and a second run covering the rest of the game (axes, coins, fire flower, both enemies, a full 2-strike hazard sequence) alongside it with no regressions and no Console errors anywhere in either log.
 
 ### Stage 9 — Final assembled level `[ ]`
 
@@ -354,9 +358,11 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - `Portal`'s `OnTriggerEnter2D` needs no `hasKey` check - it can't be touched before `Gateway` activates it, so "if the key wasn't collected, nothing happens" comes from the GameObject being inactive, not a conditional in code.
     - `Portal` defers its `SceneManager.LoadScene()` call to `Update()`, the same pattern `StrikesManager` uses, for a real (if unlikely) version of the same reason: reaching the door and losing the last strike on the exact same physics frame would otherwise race a synchronous door-reload against `StrikesManager`'s already-deferred one, and the door would win purely because it doesn't wait for `Update()` - not something anyone actually decided. Deferring both means neither can cut the other off mid-dispatch. Which of the two wins if both are true in the same frame is still down to whichever component's `Update()` Unity happens to run first - left as a known, harmless edge case rather than built out with explicit priority, the same way Stage 7 left the vampire's already-dead last-garlic shot alone.
     - Considered routing the key through `IPowerUp`/`PlayerPowerUp.CollectPowerUp()` (`KeyPowerUp`, mirroring `StrikePowerUp`'s shape) and rejected it - not because it wouldn't work structurally, but because a key isn't a power-up conceptually, and the interface's actual job (letting `PlayerPowerUp` treat several concrete power-ups polymorphically) doesn't even apply here: every pickup controller already hardcodes exactly which concrete power-up it hands over, so there's no real polymorphic call site being served. Modeled `KeyPickupController` on `SC_Coin`/`SC_Death` instead - one class, no interface, fires its own static `OnKeyCollected` event directly. `Gateway` subscribes to it the same independent-subscriber way `StrikesManager` already subscribes to `SC_Death.OnHazardCollision` and `StrikePowerUp.OnStrikeGained`.
-    - `Gateway.cs`/`Portal.cs` live at `Assets/Scripts/` root, alongside `StrikesManager.cs` - matches precedent that file location tracks "not Player-specific, not Enemy-specific" rather than Hierarchy placement; both scripts are attached directly to their own placed world objects (`Sprite_GateWay`/`Sprite_Portal`), not to a `Scripts`-folder manager GameObject.
-    - `Sprite_Key` and `Sprite_GateWay` (with `Sprite_Portal` nested under it) sit flat under `World`, matching every other pickup - no new Hierarchy subgroup, unlike `World > Enemies`, which only got introduced once there were two enemies to group.
+    - `Gateway.cs`/`Portal.cs` live at `Assets/Scripts/` root, alongside `StrikesManager.cs` - matches precedent that file location tracks "not Player-specific, not Enemy-specific" rather than Hierarchy placement; both scripts are attached directly to their own placed world objects (`Sprite_Gateway`/`Sprite_Portal`), not to a `Scripts`-folder manager GameObject.
+    - `Sprite_Key` and `Sprite_Gateway` (with `Sprite_Portal` nested under it) sit flat under `World`, matching every other pickup - no new Hierarchy subgroup, unlike `World > Enemies`, which only got introduced once there were two enemies to group.
     - The gate stays passable in both directions and isn't a locked door in the traditional sense, on purpose - the exercise only specifies "nothing happens" without the key, not that Mario is physically blocked, and a toggle-solid-collider locked door would be solving a requirement that wasn't asked for.
+    - Found a real bug during Step 3's testing: collecting the key logged both `"Gateway lit up - key collected"` and a `"Gateway has no portal assigned"` warning from the same pickup. `KeyPickupController.OnKeyCollected` is a static event, so every subscribed `Gateway` reacts to it, not just the one Mario's near - and reading `Scene_Physics.unity` directly turned up a second `Gateway` component sitting on `Canvas`, `portal` field unassigned (`fileID: 0`), unrelated to the actual `Sprite_Gateway` prefab instance's own correctly-wired one. Almost certainly `Canvas` was the active Hierarchy selection by accident when "Add Component -> Gateway" was used during Step 2. Fixed by removing that stray component from `Canvas`; no code changes involved.
+    - Sprite asset naming ended up not matching the `Sprite_X.png` convention documented for placed-in-level art: the sourced files are `Gateway.png` and `Portal.PNG` (no `Sprite_` prefix, and the portal one has an uppercase extension). Harmless functionally - Unity references sprites by GUID, not filename - but worth naming as a known inconsistency, the same spirit as the `SC_` prefix note from Stage 0, rather than silently leaving it unexplained. Not renamed, Peleg's call.
 
 ## Notes for the Video
 
