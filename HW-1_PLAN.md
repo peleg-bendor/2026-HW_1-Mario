@@ -405,9 +405,51 @@ final log's dual clocks read 2.980s game / 5.394s real for the first interval an
 both clocks for every one after it, which is the timing bug's own signature after the fix -
 the freeze is still there, it just no longer eats the wait.
 
-### Stage 12 — Final jump tuning & full test `[ ]`
+### Stage 12 — Final jump tuning & full test `[~]`
 
-A final pass on Mario's jump feel, plus one last complete playthrough before recording.
+A final pass on Mario's jump and walking feel, plus one last complete playthrough before
+recording. Not feature work - everything here is either a bug in existing movement code or an
+Inspector value that needs a different number.
+
+#### Step 1 — Mario can jump in mid-air `[x]`
+
+`PlayerJump.Jump()` only gated on `isJumping == false`, and `isJumping` was only ever set back
+to `false` by `OnFloorCollision()`. So the flag meant "has an unfinished jump in progress",
+never "is airborne", and the two differ in exactly one case: walking off a ledge without
+pressing Space leaves it `false` for the whole fall, and Space still fires a full impulse from
+mid-air.
+
+Fix: a new `IsGrounded()` check in `PlayerJump`, sampled once at the moment Space is pressed
+rather than tracked per frame, gating the jump alongside the existing `isJumping` flag. Both
+conditions stay, doing two different jobs. Geometry and the reasoning behind sampling on
+demand are in the Decisions Log below.
+
+**Confirmed working** by Peleg via `OutputLogsTemp.txt`: jumping from flat ground, from
+platform edges and across tile seams all work; pressing Space mid-fall after walking off a
+ledge is refused four separate times in the log; mashing Space at the apex is refused; landing
+and immediately jumping again works. No Console errors.
+
+#### Step 2 — Wall-stick and walking slipperiness `[ ]`
+
+Two symptoms, one shared cause: physics is doing jobs `PlayerMovement` should own.
+
+Wall-stick (holding a direction key against a wall face leaves Mario hanging in mid-air):
+`PlayerMovement` sets `linearVelocity.x` directly every `FixedUpdate`, so pressing into a wall
+makes the solver cancel that velocity every step, producing a large contact normal impulse.
+Friction is capped at `friction * normal impulse`, which with the default 0.4 works out about
+seven times larger than gravity's pull per step, so Mario doesn't slide down.
+
+Slipperiness: `Linear Damping` is already at `5` from Stage 2.5, and under exponential damping
+the coast distance after releasing a key is `speed / damping` = 5/5 = one full floor tile.
+
+Planned fix: a frictionless `PhysicsMaterial2D` on Mario's collider for the wall-stick, plus
+explicit deceleration in `PlayerMovement` when no key is held. `Linear Damping` and `jumpSpeed`
+stay where Stage 2.5 tuned them so the jump feel already signed off on doesn't need redoing.
+
+#### Step 3 — Full playthrough `[ ]`
+
+One last complete run covering everything from Stages 1-10 together, confirming nothing
+regressed before recording.
 
 ### Stage 13 — Video script `[ ]`
 
@@ -532,6 +574,14 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - Found during Step 2's testing: ghosts were being created on schedule but never appeared in the level. `Instantiate` places the new enemy at the spawner's own `transform.position`, and `EnemySpawner` had been added to `Canvas` rather than to `Sprite_Grave` - the log gave it away by naming its owner (`... from Canvas`). `Canvas` is Screen Space - Overlay with an 800x600 reference resolution, so its `RectTransform` sits nowhere near the game world's small-unit coordinates; the ghosts were alive and patrolling far off-screen the whole time, which their `EnemyMovement` fall/land logs kept confirming. Same mistake as Stage 8's stray `Gateway` component, from the same cause: `Canvas` happened to be the active Hierarchy selection when Add Component was used. Fixed by moving the component, no code involved. Worth noting that including the owning GameObject's name in the spawn log is the only reason this was a quick diagnosis rather than a hunt.
     - Timing, found during Step 4's testing and only correctly diagnosed on the third pass - two wrong answers came first, both worth recording. The symptom was that the second ghost visibly appeared under a second after the first, despite a 3-second interval. First measurement logged `Time.time`, which showed that first interval as 0.02s in one run and 0.97s in another while every later interval read a clean 3.00s; that got read as `Time.time` being an unreliable ruler during Play-mode startup, concluding the spawning itself was fine. Wrong conclusion drawn from a correct measurement. Second attempt switched the log to a real-clock `System.Diagnostics.Stopwatch`, which showed every interval at a clean 3.00s and looked like confirmation, but only proved the two clocks disagreed with each other. Peleg pushing back a third time (the ghosts still arrived together on screen, whatever the logs said) is what forced the real diagnosis: both readings were accurate simultaneously, and the gap between them *was* the bug. `Task.Delay` counts real seconds and keeps counting while Unity isn't rendering a single frame, and the editor sits frozen for a couple of seconds right after Play while it warms up - so the delay expired mid-freeze and most of the wait was already spent before anything reached the screen. Fixed by replacing `Task.Delay` with `WaitGameSecondsAsync`, which yields once per rendered frame via `await Task.Yield()` and accumulates `Time.deltaTime`, so the wait can only advance while the game is genuinely running. Confirmed afterwards by logging both clocks on every line: the first interval reads 2.980s game / 5.394s real (≈2.4s of invisible freeze, exactly the shortfall that was showing on screen), and every interval after it reads ~3.00s on both. This is the precise tradeoff Lesson 5's slide deck names when it files "timed events" under coroutines rather than `Task` - hit for real rather than read about. Kept `Task`/`async`/`CancellationToken` anyway, since the lesson's own `EnemySpawner.cs` is still the template and cancellation still comes free, while being upfront that the fix makes the `Task` version do by hand what a coroutine's `WaitForSeconds` does natively.
     - One `EnemySpawner` class, confirmed after a real back-and-forth (not settled on the first pass): Peleg's instinct was that a base `Spawner` type with a `GhostSpawner` child fit OCP better, since OCP is literally "open for extension." Countered with the actual OCP examples already in this codebase (`IWeapon` → `AxeWeapon`/`FireballWeapon`, `IPowerUp` → its three implementers) - those exist because the concrete classes have genuinely different *behavior*. Nothing about a ghost-spawner and a hypothetical future spawner would differ in behavior, only in which prefab/interval/cap it's configured with, which is data, not code - so a single class extended via Inspector fields satisfies "add a new case without modifying existing code" more directly than a subclass would, not less. Agreed to revisit as a real subclass (or a smaller virtual hook) only once a second spawner actually needs to *do* something differently, not just spawn something different - same "wait for a second/third real use case" reasoning already used for `AxePickupController` and `EnemyRangedAttack`.
+- Stage 12 design decisions (Final jump tuning & full test):
+    - The mid-air jump bug was a naming/meaning mismatch rather than broken physics. `PlayerJump.isJumping` was being used as if it meant "airborne", but it was only ever set `true` by `Jump()` itself and only ever cleared by `SC_Floor`'s landing event, so it actually meant "has an unfinished jump in progress". Those two agree everywhere except one case: walking off a ledge, where Mario is airborne with `isJumping` still `false` the whole way down. Kept the flag and added a separate ground check next to it rather than replacing it, since the two now block genuinely different things - `isJumping` stops a second jump during an ascent (the ground probe still finds the tile for a few frames after take-off), `IsGrounded()` stops jumping out of a fall that was never jumped into.
+    - `IsGrounded()` is sampled once, at the moment Space is pressed, not tracked per frame. This is the deliberate lesson from Stage 6's `EnemyMovement` saga: everything that went wrong there (corner-perch deadlock, grounding flicker, needing a 0.15s grace period) came from deriving a *state transition* out of a noisy per-frame reading on a floor made of ~90 separate 1x1 tile colliders. Sampling on demand carries no state that can go stale, and a momentarily wrong reading costs one jump input and nothing else, which is invisible in play.
+    - The probe is a thin box spanning Mario's footprint, not a small circle under his centre. The first attempt used a circle at the collider's bottom point and failed at platform edges, exactly the corner geometry from Stage 6: Mario's `CircleCollider2D` (radius `0.45`) can rest on a tile's corner with his centre hanging up to that far past the tile edge, so a centre-only probe sees open air while physics is still holding him up. Growing the circle instead was rejected - a circle wide enough to reach back onto the tile also reaches sideways, which would let him jump off a wall he's pressed against in mid-air. The box is kept at 90% of his collider width (`GroundProbeWidthFactor`, a named `const` with the reason in a comment) so it covers the corner case without ever touching a wall beside him. Its centre and width are read live from `Collider2D.bounds`, so no collider size is duplicated in `PlayerJump`, same approach `SC_Floor` already uses for its landing-height check.
+    - Ground is defined as "carries an `SC_Floor` component", reusing the allowlist Stage 7 landed on for projectile wall-detection rather than inventing a second rule. Convenient side effect: Mario's own collider, every pickup, a landed axe and an enemy's head are all excluded without naming any of them. Peleg's call that a landed axe and an enemy head shouldn't be jumpable, so this is the wanted behaviour, not a limitation to work around.
+    - `Jump()` now logs both refusal paths, not just one. The second line (`"Jump ignored - Mario has not landed from his last jump yet"`) was added mid-testing purely as a diagnostic, to tell "the probe can't find the floor" apart from "`SC_Floor` never reported the landing" without guessing, and kept afterwards since it only fires on a real key press (not per frame) and matches the existing `"Axe throw ignored - not loaded"` precedent.
+    - Wall-stick diagnosis (holding a direction key against a wall face leaves Mario hanging in mid-air, pre-existing and unrelated to the ground check): `PlayerMovement` *sets* `linearVelocity.x` every `FixedUpdate` instead of pushing, so a wall forces the solver to cancel that velocity every step, which means a contact normal impulse of about `speed` per step. Friction is capped at `friction * normal impulse`, and with no `PhysicsMaterial2D` anywhere (confirmed: `m_Material: {fileID: 0}` on Mario's collider, `m_DefaultMaterial: {fileID: 0}` in `Physics2DSettings.asset`) Unity's built-in default friction of `0.4` gives roughly `2` per step against gravity's `0.29`. Friction wins by about seven to one, which is why pressing harder into the wall makes him stick harder rather than slide.
+    - The wall-stick and the leftover slipperiness are being fixed together because they share one cause: stopping Mario is currently split between a `Rigidbody2D` damping value and a physics-material default he never explicitly set, instead of being owned by `PlayerMovement`. Removing friction alone would make walking *more* slippery, so a frictionless material and explicit deceleration in the movement script only make sense as one change. `Linear Damping` (`5`) and `jumpSpeed` (`10`) stay where Stage 2.5 put them - damping bleeds roughly 9% off vertical velocity per physics step, so changing it would force a jump re-tune that's already signed off.
 
 ## Notes for the Video
 
