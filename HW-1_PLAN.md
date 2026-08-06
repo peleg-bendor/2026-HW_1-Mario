@@ -405,7 +405,7 @@ final log's dual clocks read 2.980s game / 5.394s real for the first interval an
 both clocks for every one after it, which is the timing bug's own signature after the fix -
 the freeze is still there, it just no longer eats the wait.
 
-### Stage 12 — Final jump tuning & full test `[~]`
+### Stage 12 — Final jump tuning & full test `[x]`
 
 A final pass on Mario's jump and walking feel, plus one last complete playthrough before
 recording. Not feature work - everything here is either a bug in existing movement code or an
@@ -429,27 +429,39 @@ platform edges and across tile seams all work; pressing Space mid-fall after wal
 ledge is refused four separate times in the log; mashing Space at the apex is refused; landing
 and immediately jumping again works. No Console errors.
 
-#### Step 2 — Wall-stick and walking slipperiness `[ ]`
+#### Step 2 — Wall-stick and walking slipperiness `[x]`
 
-Two symptoms, one shared cause: physics is doing jobs `PlayerMovement` should own.
+Two symptoms, one shared cause: physics was doing jobs `PlayerMovement` should own.
 
-Wall-stick (holding a direction key against a wall face leaves Mario hanging in mid-air):
+Wall-stick (holding a direction key against a wall face left Mario hanging in mid-air):
 `PlayerMovement` sets `linearVelocity.x` directly every `FixedUpdate`, so pressing into a wall
 makes the solver cancel that velocity every step, producing a large contact normal impulse.
 Friction is capped at `friction * normal impulse`, which with the default 0.4 works out about
-seven times larger than gravity's pull per step, so Mario doesn't slide down.
+seven times larger than gravity's pull per step, so Mario didn't slide down.
 
-Slipperiness: `Linear Damping` is already at `5` from Stage 2.5, and under exponential damping
+Slipperiness: `Linear Damping` was already at `5` from Stage 2.5, and under exponential damping
 the coast distance after releasing a key is `speed / damping` = 5/5 = one full floor tile.
 
-Planned fix: a frictionless `PhysicsMaterial2D` on Mario's collider for the wall-stick, plus
-explicit deceleration in `PlayerMovement` when no key is held. `Linear Damping` and `jumpSpeed`
-stay where Stage 2.5 tuned them so the jump feel already signed off on doesn't need redoing.
+Fix: a new frictionless `PhysicsMaterial2D` (`Assets/Physics/Frictionless`, friction and
+bounciness both `0`) on `Sprite_Mario`'s `CircleCollider2D` for the wall-stick, plus a
+`deceleration` field on `PlayerMovement` (starting at `40`) braking horizontal velocity with
+`Mathf.MoveTowards` when no key is held. Applied in the air as well as on the ground, Peleg's
+call, which is what keeps `PlayerMovement` free of a per-frame ground check. `Linear Damping`
+and `jumpSpeed` stay where Stage 2.5 tuned them so the jump feel already signed off on didn't
+need redoing.
 
-#### Step 3 — Full playthrough `[ ]`
+**Confirmed working** by Peleg via `OutputLogsTemp.txt`: Mario slides down a wall face instead
+of hanging, walking and running jumps both feel right ("very nice feel"), the jump arc is
+unchanged, and a spikes hit still costs exactly one strike with both `SC_Death` subscribers
+firing. No Console errors.
 
-One last complete run covering everything from Stages 1-10 together, confirming nothing
-regressed before recording.
+#### Step 3 — Full playthrough `[x]`
+
+One last complete run covering everything from Stages 1-11 together, confirming nothing
+regressed before recording - in particular that no platform became un-jumpable now that a
+landed axe and an enemy's head deliberately don't count as ground.
+
+**Confirmed working** by Peleg directly in the Editor rather than via a pasted log.
 
 ### Stage 13 — Video script `[ ]`
 
@@ -582,6 +594,9 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - `Jump()` now logs both refusal paths, not just one. The second line (`"Jump ignored - Mario has not landed from his last jump yet"`) was added mid-testing purely as a diagnostic, to tell "the probe can't find the floor" apart from "`SC_Floor` never reported the landing" without guessing, and kept afterwards since it only fires on a real key press (not per frame) and matches the existing `"Axe throw ignored - not loaded"` precedent.
     - Wall-stick diagnosis (holding a direction key against a wall face leaves Mario hanging in mid-air, pre-existing and unrelated to the ground check): `PlayerMovement` *sets* `linearVelocity.x` every `FixedUpdate` instead of pushing, so a wall forces the solver to cancel that velocity every step, which means a contact normal impulse of about `speed` per step. Friction is capped at `friction * normal impulse`, and with no `PhysicsMaterial2D` anywhere (confirmed: `m_Material: {fileID: 0}` on Mario's collider, `m_DefaultMaterial: {fileID: 0}` in `Physics2DSettings.asset`) Unity's built-in default friction of `0.4` gives roughly `2` per step against gravity's `0.29`. Friction wins by about seven to one, which is why pressing harder into the wall makes him stick harder rather than slide.
     - The wall-stick and the leftover slipperiness are being fixed together because they share one cause: stopping Mario is currently split between a `Rigidbody2D` damping value and a physics-material default he never explicitly set, instead of being owned by `PlayerMovement`. Removing friction alone would make walking *more* slippery, so a frictionless material and explicit deceleration in the movement script only make sense as one change. `Linear Damping` (`5`) and `jumpSpeed` (`10`) stay where Stage 2.5 put them - damping bleeds roughly 9% off vertical velocity per physics step, so changing it would force a jump re-tune that's already signed off.
+    - Deceleration uses `Mathf.MoveTowards` (linear, actually reaches zero) rather than another damping-style multiplier (exponential, approaches zero without arriving) - the residual drift is precisely what "slippery" meant here. Starting value `40` units per second squared against a `speed` of `5` works out to a stop in 0.125s over about a third of a tile, versus a full tile before. Left as a plain serialized field so it's tunable in Play mode like Stage 2.5's numbers.
+    - Braking applies in the air as well as on the ground, Peleg's call after weighing both. Grounded-only would preserve a running jump's forward momentum, but `PlayerMovement` would then need its own per-frame ground check, which is exactly the flakiness Step 1 was designed to avoid and Stage 6 spent three revisions on. `Linear Damping` at `5` was already eating most airborne momentum anyway, so the simple version turned out to cost nothing that was there to lose.
+    - `EnemySpawner`'s dual-clock timing suffix (`" at 2.985s game / 8.722s real"`, plus the `Stopwatch` field and `TimingSuffix()` behind it) removed at Peleg's request while finishing this stage - it was instrumentation for Stage 11's timing investigation, that investigation is written up above, and it read as debug output in a Console about to be recorded. `WaitGameSecondsAsync` itself is untouched, since that's the fix rather than the instrumentation, and each log line still names its owning GameObject, which is what made the `Canvas`-instead-of-`Sprite_Grave` mistake a quick diagnosis.
 
 ## Notes for the Video
 
@@ -603,3 +618,4 @@ _(build this up per stage, so recording at the end is just following a checklist
     - Final level + camera follow: show the camera tracking Mario on both axes across the level's platforms - flat ground, the staircase climbs on the left and right ends, the two big elevated shelves - and confirm it stays smooth rather than snapping. Worth narrating that this is a genuinely assembled level, not a fresh test scene: every mechanic from every earlier stage already lives in this one map. Worth noting `CameraFollow` as a small, single-purpose SRP example, and that the World-offset issue flagged back in Stage 2.5 resolved itself once the camera reads Mario's live position instead of a fixed number.
     - Game over / Game won GUI: show a normal death down to 0 strikes - red "GAME OVER" on screen for about a second right after the level restarts; show reaching the portal with the key already collected - green "GAME WON" the same way. Worth narrating that the message intentionally shows after the reload rather than before it (SRP point: `GameEndManager` only ever decides *which* outcome happened and reloads immediately, same as `StrikesManager`/`Portal` always did; `GameEndMessageManager` owns displaying it, on its own timer, entirely decoupled from the reload). Also worth a line on the tie-break: reaching the portal and losing the last strike on the same frame is handled explicitly (win always wins), not left to whichever collision Unity happens to process first.
     - Bonus spawner: show `Sprite_Grave` in the level with no ghosts around it at the start, then ghosts appearing from it one at a time on a steady 3-second beat up to the cap of 3; kill one with a fireball or axe and show the next one arriving to refill the slot, with the Console's `"Enemy spawn skipped - already at cap (3)"` visible while the level is full. Two things worth narrating deliberately. First, this is an intentional reinterpretation of the bonus item rather than a literal one: the exercise says destroyed enemies come back after X seconds, and this instead keeps a steady population topped up to a cap, which reads better in play and means the spawner never needs to know how or whether any particular enemy died. Second, the `Task` timing story, which is the most interesting thing in this stage - it's built on Lesson 5's own `EnemySpawner.cs` (`async`/`await`/`CancellationTokenSource`), but `Task.Delay` had to go, because it counts real time and kept running while the editor sat frozen at startup, so the first two ghosts arrived on screen almost together. Show `WaitGameSecondsAsync` and explain that it only advances while frames are actually rendering. Good place to note this is exactly what the Lesson 5 slides mean by filing timed events under coroutines, and that the fix amounts to hand-building what `WaitForSeconds` gives for free. Also worth a line on the single-class design: one `EnemySpawner` configured by Inspector fields rather than a `Spawner`/`GhostSpawner` hierarchy, since a second spawner would differ only in which prefab it points at, and that's data rather than behavior.
+    - Stage 12: not a graded item on its own, so no dedicated segment. The tighter stopping and the fixed wall-stick will just be visible throughout whatever else gets recorded. Two optional narration lines if there's room: Mario can no longer jump out of a fall he walked into, because `PlayerJump`'s flag was tracking "has an unfinished jump" rather than "is airborne"; and the ground check samples once on key press instead of every frame, which is the direct lesson from the ghost's grounding troubles on a floor made of ~90 separate tile colliders.
