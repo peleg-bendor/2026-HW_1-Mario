@@ -21,15 +21,8 @@ public class EnemySpawner : MonoBehaviour
 
     private CancellationTokenSource cancellationTokenSource;
 
-    // Real elapsed time, logged alongside game time purely so the two stay comparable - the
-    // gap between them is what the first-interval bug turned out to be. Fully qualified rather
-    // than "using System.Diagnostics;", which would make every Debug.Log below ambiguous
-    // against System.Diagnostics.Debug.
-    private readonly System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-
     void Start()
     {
-        stopwatch.Start();
         StartSpawning();
     }
 
@@ -103,7 +96,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (spawned.Count >= maxAlive)
         {
-            Debug.Log("Enemy spawn skipped - already at cap (" + maxAlive + "): " + gameObject.name + TimingSuffix());
+            Debug.Log("Enemy spawn skipped - already at cap (" + maxAlive + "): " + gameObject.name);
             return;
         }
 
@@ -115,12 +108,6 @@ public class EnemySpawner : MonoBehaviour
 
         GameObject enemy = Instantiate(enemyPrefab, transform.position, Quaternion.identity);
         spawned.Add(enemy);
-        Debug.Log("Enemy spawned: " + enemy.name + " (" + spawned.Count + "/" + maxAlive + " from " + gameObject.name + ")" + TimingSuffix());
-    }
-
-    private string TimingSuffix()
-    {
-        return " at " + Time.time.ToString("F3") + "s game / "
-             + stopwatch.Elapsed.TotalSeconds.ToString("F3") + "s real";
+        Debug.Log("Enemy spawned: " + enemy.name + " (" + spawned.Count + "/" + maxAlive + " from " + gameObject.name + ")");
     }
 }
