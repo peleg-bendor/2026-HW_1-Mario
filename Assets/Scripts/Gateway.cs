@@ -1,9 +1,12 @@
 using UnityEngine;
 
+// The doorway at the end of the level. Its whole job is switching on the portal once the key
+// is collected; what the portal then does is the portal's business.
 public class Gateway : MonoBehaviour
 {
-    // The portal is a child object, off until the key's collected. Gateway's whole job is
-    // reacting to that one event - it doesn't know or care what happens once the portal is on.
+    // A child object, inactive until the key turns it on. The gateway itself has no collider,
+    // so before then Mario walks straight through with no trigger firing at all - "nothing
+    // happens without the key" is the object being off, not a condition in code.
     [SerializeField] private GameObject portal;
 
     private void OnEnable()

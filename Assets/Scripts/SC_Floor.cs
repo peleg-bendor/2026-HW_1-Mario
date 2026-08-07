@@ -1,7 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+// Marks a GameObject as a floor tile. Doubles as the allowlist the rest of the project uses to
+// tell real terrain from everything else, which is how projectiles and the jump check exclude
+// pickups, a landed axe and an enemy's head without naming any of them.
 public class SC_Floor : MonoBehaviour
 {
     public delegate void FloorCollisionHandler();
@@ -14,18 +15,16 @@ public class SC_Floor : MonoBehaviour
             float _playerY = col.gameObject.transform.position.y;
             float _tileY = transform.position.y;
 
-            // Distinguishes "landed on top" from "bumped the side" - Collision2D alone doesn't
-            // say which face was hit, so we check whether the player's center is above the tile's
-            // center by at least the player collider's own half-height (reading it live off the
-            // collider instead of hardcoding it, so this stays correct if Mario's collider ever
-            // gets resized).
+            // Collision2D doesn't say which face was hit, so landing on top is told from bumping
+            // the side by whether Mario's centre clears the tile's by his own collider's half
+            // height - read live off that collider so it survives him ever being resized.
             float playerColliderHalfHeight = col.collider.bounds.extents.y;
 
             if (_playerY > _tileY + playerColliderHalfHeight)
             {
-                // Fires on every tile Mario walks onto, not just real landings - the floor is
-                // 14 separate colliders, so crossing a tile boundary re-triggers this. Whether
-                // it's a real landing is PlayerJump's call, since it's the one tracking jump state.
+                // Raised for every tile Mario steps onto, not only real landings, since each
+                // tile is its own collider. Whether it counts as a landing is PlayerJump's call,
+                // because that is what tracks jump state.
                 if (OnFloorCollision != null)
                     OnFloorCollision();
             }

@@ -1,15 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Patrols an enemy back and forth using the level's own geometry - it turns at whatever wall
+// it meets and falls off whatever edge it reaches, rather than following a set distance or
+// waypoints. Nothing in here is specific to the ghost currently using it.
 public class EnemyMovement : MonoBehaviour
 {
     private enum Direction { Left, Right }
 
     [SerializeField] private Direction startingFacing = Direction.Left;
 
-    // Which way this enemy's artwork already points before any mirroring is applied. Mario's
-    // sprite is drawn facing right, but the ghost's is drawn facing left, so the same facing
-    // direction has to mirror the two of them opposite ways.
+    // Which way this enemy's artwork already points before any mirroring. Mario's sprite faces
+    // right, the ghost's faces left, so the same facing direction has to mirror them opposite
+    // ways.
     [SerializeField] private Direction spriteNativeFacing = Direction.Right;
 
     [SerializeField] private float speed = 2f;
@@ -17,21 +20,19 @@ public class EnemyMovement : MonoBehaviour
     // How far past the collider's own edge to look for a wall ahead.
     [SerializeField] private float wallCheckBuffer = 0.1f;
 
-    // How long ground contact has to stay missing before the enemy counts as airborne. The floor
-    // is ~90 separate 1x1 tile colliders rather than one surface, and a round collider crossing a
-    // seam loses its contact (or gets a briefly tilted normal) for a physics step or two while
-    // the solver hands it from one tile to the next. Trusting a single frame's answer therefore
-    // produced constant false "falling" reports on perfectly flat ground. A real fall lasts far
-    // longer than a seam glitch, so waiting this long tells them apart.
+    // How long ground contact has to stay missing before the enemy counts as airborne. The
+    // floor is many separate tile colliders, and a round collider crossing a seam loses contact
+    // for a physics step or two while the solver hands it from one tile to the next, so a
+    // single frame's answer isn't trustworthy. A real fall lasts far longer than a seam does.
     [SerializeField] private float groundLossGrace = 0.15f;
 
-    // A floor contact pushes back along Y, a wall contact along X, so this only has to tell the
-    // two apart. 0.5 puts the cutoff at 60 degrees off vertical, which keeps corner contacts on
-    // the "standing on it" side where they belong.
+    // A floor contact pushes back along Y and a wall contact along X, so this only has to tell
+    // the two apart. The cutoff sits at 60 degrees off vertical, which keeps a contact with a
+    // tile's corner on the "standing on it" side where it belongs.
     private const float MinVerticalContactNormal = 0.5f;
 
     // Contacts one enemy can have at once: the ground, maybe a wall, maybe Mario. Comfortably
-    // more than needed, and GetContacts just stops filling once it runs out of room.
+    // more than needed, and GetContacts stops filling once it runs out of room.
     private const int MaxTrackedContacts = 8;
 
     private Rigidbody2D rb;
@@ -45,11 +46,9 @@ public class EnemyMovement : MonoBehaviour
 
     private readonly ContactPoint2D[] contacts = new ContactPoint2D[MaxTrackedContacts];
 
-    // The wall check casts outward from the collider's own centre, so the cast begins inside this
-    // enemy's collider. This project has Physics2D's "Queries Start In Colliders" enabled, which
-    // makes the enemy's own collider the nearest hit every single time. Reading just the closest
-    // hit would therefore always return the enemy itself, so we gather every hit along the ray
-    // and look for the first one that is real terrain.
+    // The wall check starts inside this enemy's own collider, and this project has Physics2D's
+    // "Queries Start In Colliders" enabled, so the nearest hit is always the enemy itself.
+    // Gathering every hit along the ray and skipping its own collider is what gets past that.
     private ContactFilter2D castFilter;
     private readonly List<RaycastHit2D> castHits = new List<RaycastHit2D>();
 
@@ -59,7 +58,8 @@ public class EnemyMovement : MonoBehaviour
         col = GetComponent<Collider2D>();
 
         castFilter = new ContactFilter2D();
-        castFilter.useTriggers = false;  // pickups (coins, axes, hearts) are not terrain
+        // Pickups are triggers, and a trigger is never something to turn around at.
+        castFilter.useTriggers = false;
 
         facingDirection = startingFacing == Direction.Left ? -1f : 1f;
         UpdateSpriteFacing();
@@ -85,18 +85,16 @@ public class EnemyMovement : MonoBehaviour
             Debug.Log("Enemy hit a wall - turned around");
         }
 
-        // Only drive movement while grounded, and leave the horizontal velocity untouched while
-        // airborne, so momentum carries the enemy over an edge instead of dropping it straight down.
+        // Velocity is only ever driven while grounded and left alone while airborne, so momentum
+        // carries the enemy over an edge instead of pinning it there the moment it steps off.
         if (grounded)
             rb.linearVelocity = new Vector2(facingDirection * speed, rb.linearVelocity.y);
     }
 
     // Reads what the collider is genuinely touching rather than casting a ray downward. A ray
-    // from the centre stops finding ground the moment the enemy's middle passes a tile edge, yet
-    // the collider can still be resting on that tile's corner. An enemy that physics is holding
-    // up while this script believes it is falling gets stuck: too supported to drop, too
-    // "airborne" to walk. This answers only for the current instant, so FixedUpdate smooths it
-    // over groundLossGrace before acting on the result.
+    // answers "is there ground below my centre", physics answers "is anything holding me up",
+    // and the two disagree when a round collider rests on a tile's corner - too supported to
+    // fall, too airborne to walk. This is the instant's answer; FixedUpdate smooths it.
     private bool HasGroundContact()
     {
         int contactCount = col.GetContacts(contacts);
@@ -110,13 +108,13 @@ public class EnemyMovement : MonoBehaviour
             if (other == null || other.isTrigger)
                 continue;
 
-            // Mario is not scenery to stand on. If he were, an enemy he landed on mid-fall would
-            // decide it had touched down.
+            // Mario is not scenery to stand on. If he were, an enemy landing on him mid-fall
+            // would decide it had touched down.
             if (other.CompareTag("Player"))
                 continue;
 
-            // Only the axis matters here, not the sign, so this holds regardless of which way
-            // round Unity reports the normal.
+            // Only the axis matters, not the sign, so this holds whichever way round Unity
+            // happens to report the normal.
             if (Mathf.Abs(contacts[i].normal.y) > MinVerticalContactNormal)
                 return true;
         }
@@ -135,8 +133,8 @@ public class EnemyMovement : MonoBehaviour
             if (hit.collider == null || hit.collider == col)
                 continue;
 
-            // Mario is deliberately invisible here too. If he counted as a wall, the enemy would
-            // turn around just before reaching him and never land the touch that costs a strike.
+            // Mario is invisible here too. Counting as a wall would make the enemy turn around
+            // just short of him and never land the touch that costs a strike.
             if (hit.collider.CompareTag("Player"))
                 continue;
 
@@ -148,8 +146,8 @@ public class EnemyMovement : MonoBehaviour
 
     private void ReportGroundChange(bool grounded)
     {
-        // The very first check establishes a baseline rather than reporting a transition -
-        // an enemy placed in mid-air hasn't "walked off" anything, it just started there.
+        // The first check establishes a baseline rather than reporting a transition - an enemy
+        // placed in mid-air hasn't walked off anything, it just started there.
         if (!groundStateKnown)
         {
             groundStateKnown = true;
@@ -162,7 +160,7 @@ public class EnemyMovement : MonoBehaviour
 
         wasGrounded = grounded;
 
-        // Named, because more than one enemy can be patrolling at once and the Console gives no
+        // Named, because several enemies can be patrolling at once and the Console gives no
         // other way to tell which one this is.
         Debug.Log(grounded
             ? "Enemy landed - resuming patrol: " + gameObject.name
@@ -172,7 +170,7 @@ public class EnemyMovement : MonoBehaviour
     private void UpdateSpriteFacing()
     {
         // localScale.x mirrors the sprite, but which sign counts as "facing right" depends on
-        // which way the artwork itself already points, hence spriteNativeFacing.
+        // which way the artwork already points, hence spriteNativeFacing.
         float nativeSign = spriteNativeFacing == Direction.Right ? 1f : -1f;
         transform.localScale = new Vector3(facingDirection * nativeSign, 1, 1);
     }

@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
+// Owns which weapon is selected and dispatches attacks to it. Holds whatever it was given as
+// IWeapon and never learns the concrete types, so adding a weapon means registering one more
+// rather than editing anything in here.
 public class WeaponsHandler : MonoBehaviour
 {
     public static event System.Action<string> OnWeaponSelected;
@@ -17,6 +20,8 @@ public class WeaponsHandler : MonoBehaviour
         weapons.Add(weapon);
         Debug.Log("Weapon registered: " + weapon.GetType().Name);
 
+        // The first weapon registered is the one Mario starts holding, so the GUI needs telling
+        // about it even though nobody pressed anything.
         if (weapons.Count == 1)
             NotifySelection();
     }
@@ -38,6 +43,9 @@ public class WeaponsHandler : MonoBehaviour
         if (weapons.Count < 2)
             return;
 
+        // Walks forward from the current selection and stops at the first weapon that says it
+        // can be used, so a weapon Mario hasn't unlocked yet gets skipped rather than selected
+        // and then silently refusing to fire.
         for (int step = 1; step < weapons.Count; step++)
         {
             int candidateIndex = (selectedIndex + step) % weapons.Count;

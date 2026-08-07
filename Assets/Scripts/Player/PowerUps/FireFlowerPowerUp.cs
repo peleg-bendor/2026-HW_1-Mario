@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// Unlocks Mario's fireball. Looks up IUseableWeapon rather than FireballWeapon itself, so
+// this knows only that something on Mario can be unlocked, not which weapon it is.
 public class FireFlowerPowerUp : IPowerUp
 {
     public void ApplyPowerUp(GameObject player)

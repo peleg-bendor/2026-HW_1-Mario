@@ -1,12 +1,10 @@
 using UnityEngine;
 
+// Grants Mario an extra strike. Unlike the other power-ups it ignores the player argument
+// entirely: strikes live on StrikesManager, a scene-level manager, so there is nothing on
+// Mario to reach into. It announces the gain instead and lets the owner of the count apply it.
 public class StrikePowerUp : IPowerUp
 {
-    // Fired instead of reaching into the player's own components, the way AxePowerUp/
-    // FireFlowerPowerUp do (player.GetComponentInChildren<...>()). Strikes are tracked on
-    // StrikesManager, a scene-level manager, not anything that lives under the player -
-    // there's nothing on `player` to reach into. StrikesManager subscribes to this event
-    // the same way it already subscribes to SC_Death.OnSpikeCollision.
     public static event System.Action OnStrikeGained;
 
     public void ApplyPowerUp(GameObject player)

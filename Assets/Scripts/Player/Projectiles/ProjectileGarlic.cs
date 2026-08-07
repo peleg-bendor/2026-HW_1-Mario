@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// One garlic thrown by an enemy. Whether hitting Mario costs him a strike is not decided here -
+// that comes from the SC_Death attached alongside this script.
 public class ProjectileGarlic : MonoBehaviour
 {
     public float speed = 5f;
@@ -17,14 +19,16 @@ public class ProjectileGarlic : MonoBehaviour
         if (rb != null)
         {
             transform.localScale = new Vector3(direction, 1, 1);
+            // Impulse, not Force: a one-shot push has to be applied as one, or only a single
+            // physics step's worth of it ever becomes velocity.
             rb.AddForce(new Vector2(direction * speed, 0), ForceMode2D.Impulse);
             Destroy(gameObject, lifetime);
         }
     }
 
-    // Deliberately no IEnemy check here, unlike ProjectileFireball - the garlic doesn't kill
-    // enemies, and checking IEnemy would have it kill the vampire that just fired it, since it
-    // spawns overlapping the vampire's own collider. See HW-1_PLAN.md's Stage 7 decisions.
+    // No IEnemy check here, deliberately, unlike ProjectileFireball. The garlic isn't a weapon
+    // against enemies, and checking for them would kill the enemy that just threw it, since it
+    // spawns beside that enemy's own collider.
     void OnTriggerEnter2D(Collider2D other)
     {
         if (other.gameObject.tag == "Player")
@@ -34,9 +38,7 @@ public class ProjectileGarlic : MonoBehaviour
             return;
         }
 
-        // SC_Floor marks an actual tile - the only other thing the garlic stops for.
-        // Everything else, including enemies, it passes straight through - it isn't a weapon
-        // against them, unlike ProjectileFireball.
+        // Same allowlist the fireball uses - SC_Floor is what marks a tile as a tile.
         if (other.GetComponent<SC_Floor>() != null)
         {
             Debug.Log("Garlic hit a wall");

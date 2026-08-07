@@ -1,22 +1,18 @@
 using UnityEngine;
 
-/// Keeps the camera centered on a target (Mario) on both axes, smoothed rather than
-/// snapping straight to his position every frame. Runs in LateUpdate deliberately - Mario's
-/// own position is driven by physics in FixedUpdate, so following in LateUpdate guarantees
-/// the camera reads his fully-resolved position for the frame instead of trailing it by one
-/// physics step.
+// Keeps the camera centred on Mario, smoothed rather than snapping. Runs in LateUpdate so it
+// reads his fully resolved position for the frame instead of trailing physics by a step.
 public class CameraFollow : MonoBehaviour
 {
     [SerializeField] private Transform target;
     [SerializeField] private float smoothTime = 0.15f;
 
-    // Only x/y ever follow the target - z is read once at startup so the camera's own
-    // depth is preserved instead of a hardcoded -10 that would silently go stale if the
-    // camera's starting position ever changes.
+    // Only x and y follow. Depth is read once at startup rather than hardcoded, so moving the
+    // camera in the Editor doesn't silently leave a stale number in here.
     private float cameraZ;
 
-    // SmoothDamp needs a persistent velocity reference between calls - not read anywhere
-    // else, it's just the state the smoothing math carries frame to frame.
+    // SmoothDamp needs somewhere to keep its working velocity between calls. Nothing else
+    // reads it.
     private Vector3 followVelocity;
 
     private void Awake()
@@ -32,6 +28,8 @@ public class CameraFollow : MonoBehaviour
         if (target == null)
             return;
 
+        // Mario's world position already accounts for whatever his parent objects are offset
+        // by, so following it needs no correction for how the level is nested.
         Vector3 desiredPosition = new Vector3(target.position.x, target.position.y, cameraZ);
         transform.position = Vector3.SmoothDamp(transform.position, desiredPosition, ref followVelocity, smoothTime);
     }

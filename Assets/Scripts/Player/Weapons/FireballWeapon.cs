@@ -1,6 +1,8 @@
 using UnityEngine;
 
-public class FireballWeapon : MonoBehaviour,IUseableWeapon
+// Mario's fireball: unlimited, but locked until the Fire Flower unlocks it. The lock is the
+// whole reason this implements IUseableWeapon while the axe implements IReloadWeapon instead.
+public class FireballWeapon : MonoBehaviour, IUseableWeapon
 {
     public GameObject projectile;
     private bool _isEquip = false;
@@ -13,6 +15,7 @@ public class FireballWeapon : MonoBehaviour,IUseableWeapon
             ProjectileFireball scProjectile =  curProjectile.GetComponent<ProjectileFireball>();
             if(scProjectile != null)
             {
+                // Mario's facing lives on his sprite's scale, one level up from this weapon.
                 float direction = 1;
                 if(transform.parent != null)
                     direction = transform.parent.localScale.x;
@@ -35,7 +38,9 @@ public class FireballWeapon : MonoBehaviour,IUseableWeapon
     {
         _isEquip = false;
     }
-    
+
+    // False until the Fire Flower is collected, which is what makes weapon cycling skip this
+    // weapon instead of selecting one that would refuse to fire.
     public bool IsAvailable()
     {
         return _isEquip;

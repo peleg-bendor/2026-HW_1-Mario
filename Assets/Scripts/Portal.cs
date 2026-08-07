@@ -1,13 +1,12 @@
 using UnityEngine;
 
+// The way out, once the gateway has switched it on. It only notices Mario arriving and says
+// so - it needs no key check of its own, because it cannot be touched before it exists.
 public class Portal : MonoBehaviour
 {
-    // Raised the moment Mario reaches the portal. GameEndManager is the only subscriber,
-    // and it doesn't reload the scene until its own display timer runs out - so unlike the
-    // old deferred-to-Update() flag this replaced, firing this inline is safe. It's also
-    // what makes the win-beats-death tie explicitly decidable now instead of a coin flip:
-    // GameEndManager gives this event priority over StrikesManager.OnGameOver if both
-    // arrive the same frame.
+    // Given priority over StrikesManager.OnGameOver when both land on the same frame, so a win
+    // reached on the frame Mario also died is settled by design rather than by whichever
+    // physics callback Unity happened to dispatch first.
     public static event System.Action OnGameWon;
 
     void OnTriggerEnter2D(Collider2D col)

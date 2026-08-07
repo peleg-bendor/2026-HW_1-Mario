@@ -1,16 +1,25 @@
 using UnityEngine;
 
+// One thrown axe, from the throw until it either kills something, is picked back up, or fades
+// out. What collecting it grants lives in AxePowerUp, so all that is left here is this one
+// axe's physical life.
 public class ProjectileAxe : MonoBehaviour
 {
     public float speedX = 5f;
     public float speedY = 5f;
     public float lifetime = 10f;
+
+    // How long before the end of its life the axe starts fading, as a warning that walking
+    // over to reclaim it is about to stop being an option.
     [SerializeField] private float warningDuration = 3f;
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
     private Color baseColor;
     private float age = 0f;
+
+    // Until the axe has hit something that isn't Mario, touching Mario is ignored. Without
+    // this, an axe spawning at his position counts as instantly reclaimed and vanishes.
     private bool hasLanded = false;
 
     void Awake()
@@ -25,6 +34,8 @@ public class ProjectileAxe : MonoBehaviour
     {
         age += Time.deltaTime;
 
+        // Fading alpha rather than tinting the sprite: SpriteRenderer.color is a multiplicative
+        // tint already sitting at white, so lightening it further does nothing visible.
         float warningStart = lifetime - warningDuration;
         if (spriteRenderer != null && age >= warningStart)
         {
@@ -53,9 +64,9 @@ public class ProjectileAxe : MonoBehaviour
     {
         if (!hasLanded)
         {
-            // Checked before the landing branch below, because an enemy is something a thrown axe
-            // destroys in flight rather than a surface it comes to rest on. Without this the
-            // "anything that isn't the Player is the floor" rule underneath would claim it first.
+            // Checked before the landing branch below, because an enemy is something a thrown
+            // axe destroys in flight rather than a surface it comes to rest on. Otherwise the
+            // "anything that isn't Mario is the floor" rule underneath would claim it first.
             IEnemy enemy = col.gameObject.GetComponent<IEnemy>();
             if (enemy != null)
             {
@@ -66,6 +77,8 @@ public class ProjectileAxe : MonoBehaviour
 
             if (col.gameObject.tag != "Player")
             {
+                // Freezing every constraint is what makes a landed axe rest in place. It also
+                // makes it a solid obstacle, which is why a patrolling enemy turns around at one.
                 Debug.Log("Axe landed");
                 hasLanded = true;
                 rb.linearVelocity = Vector2.zero;

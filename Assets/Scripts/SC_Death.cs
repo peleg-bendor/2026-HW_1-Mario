@@ -1,8 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
+// Marks a GameObject as something that hurts Mario on contact. Attached unchanged to spikes,
+// to both enemies, and to the garlic they throw - what happens next is decided by whoever
+// subscribes, not here.
 public class SC_Death : MonoBehaviour
 {
     public delegate void HazardCollisionHandler();
@@ -16,10 +16,9 @@ public class SC_Death : MonoBehaviour
         HandleContact(col.gameObject);
     }
 
-    // Trigger counterpart of the check above - needed for hazards whose collider has to be a
-    // trigger (a thrown projectile, so it can fly through terrain) rather than solid (spikes,
-    // the ghost). Both funnel into the same events below, so PlayerDeath/StrikesManager don't
-    // need to know or care which kind of collider actually detected the hit.
+    // Trigger counterpart of the check above, needed for hazards whose collider has to be a
+    // trigger so it can fly through terrain. Both funnel into the same events, so subscribers
+    // never have to care which kind of collider detected the hit.
     void OnTriggerEnter2D(Collider2D other)
     {
         HandleContact(other.gameObject);

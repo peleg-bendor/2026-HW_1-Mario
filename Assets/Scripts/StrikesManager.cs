@@ -1,15 +1,15 @@
 using UnityEngine;
 
+// Owns how many strikes Mario has left, and nothing else. It doesn't move him, doesn't draw
+// the number, and doesn't restart the game - it only counts, and says so when the count hits
+// zero.
 public class StrikesManager : MonoBehaviour
 {
     public static event System.Action<int> OnStrikeCountChanged;
 
-    // Raised the instant strikes hit 0. GameEndManager is the only subscriber, and it
-    // doesn't reload the scene until its own display timer runs out - so unlike the old
-    // deferred-to-Update() flag this replaced, firing this inline is safe even though
-    // PlayerDeath is an independent subscriber to the same OnHazardCollision event with
-    // no guaranteed order against this one: nothing here calls SceneManager.LoadScene(),
-    // so there's nothing left to race.
+    // Raised the instant strikes hit zero. Nothing here reloads the scene, so this can fire
+    // inline even though PlayerDeath subscribes to the same hazard event with no guaranteed
+    // order against this one - there is no reload left for the two of them to race.
     public static event System.Action OnGameOver;
 
     [SerializeField] private int startingStrikes = 3;
@@ -50,8 +50,8 @@ public class StrikesManager : MonoBehaviour
 
     private void OnStrikeGained()
     {
-        // Capped at startingStrikes rather than a separate hardcoded max - the ceiling
-        // is meant to match the starting amount, not some independent number.
+        // Capped at the starting amount rather than a separate maximum, so the ceiling can't
+        // drift away from the number Mario begins with.
         if (strikesRemaining >= startingStrikes)
         {
             Debug.Log("Strike pickup ignored - already at max (" + startingStrikes + ")");

@@ -1,6 +1,8 @@
 using UnityEngine;
 
-public class AxeWeapon : MonoBehaviour,IReloadWeapon
+// Mario's axe: a stockpile he can throw from and refill by collecting more. Owns the count
+// and announces every change, so nothing else has to track how many axes he has.
+public class AxeWeapon : MonoBehaviour, IReloadWeapon
 {
     public static event System.Action<int> OnAxeCountChanged;
 
@@ -9,6 +11,8 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
 
     void Start()
     {
+        // Announced once at startup so a display reading this count doesn't need its own copy
+        // of the starting value.
         Debug.Log("Starting with " + axesHeld + " axe(s)");
         OnAxeCountChanged?.Invoke(axesHeld);
     }
@@ -21,6 +25,7 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
             ProjectileAxe scProjectile =  curProjectile.GetComponent<ProjectileAxe>();
             if(scProjectile != null)
             {
+                // Mario's facing lives on his sprite's scale, one level up from this weapon.
                 float direction = 1;
                 if(transform.parent != null)
                     direction = transform.parent.localScale.x;
@@ -36,6 +41,8 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
         }
     }
 
+    // Called only from the pickup path, so this means "gained an axe" rather than any kind of
+    // manual reload action.
     public void Reload()
     {
         axesHeld++;
@@ -43,6 +50,8 @@ public class AxeWeapon : MonoBehaviour,IReloadWeapon
         OnAxeCountChanged?.Invoke(axesHeld);
     }
 
+    // Always true: unlike the fireball, the axe is never locked, so it is always something
+    // weapon cycling can land on.
     public bool IsAvailable()
     {
         return true;

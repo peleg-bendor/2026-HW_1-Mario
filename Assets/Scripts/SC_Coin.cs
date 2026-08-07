@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.U2D;
 
+// A coin lying in the level. Detects Mario and announces itself, and that is all - who counts
+// coins and who draws the total are somebody else's problem.
 public class SC_Coin : MonoBehaviour
 {
     public delegate void CoinCollisionHandler();
@@ -12,8 +11,6 @@ public class SC_Coin : MonoBehaviour
     {
         if (col.gameObject.tag == "Player")
         {
-            // Names this coin, not the player who walked into it - col.gameObject is Mario,
-            // so the old version logged "Coin collected: Sprite_Mario" on every pickup.
             Debug.Log("Coin collected: " + gameObject.name);
             if (OnCoinCollision != null)
                 OnCoinCollision();

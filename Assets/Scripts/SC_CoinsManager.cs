@@ -1,9 +1,8 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+// Counts coins and draws the total. Listens for coin pickups without knowing which coin, or
+// how many exist - the count lives here and nowhere else.
 public class SC_CoinsManager : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI coinsText;
@@ -26,5 +25,4 @@ public class SC_CoinsManager : MonoBehaviour
         if (coinsText != null)
             coinsText.text = "Coins: " + coins.ToString();
     }
-
 }

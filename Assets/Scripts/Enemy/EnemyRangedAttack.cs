@@ -1,22 +1,22 @@
 using UnityEngine;
 
+// Fires a projectile on a repeating timer, alternating sides. Named for the behaviour rather
+// than the enemy using it, so it carries nothing specific to the vampire it currently sits on.
 public class EnemyRangedAttack : MonoBehaviour
 {
     private enum Direction { Left, Right }
 
     [SerializeField] private GameObject projectilePrefab;
 
-    // Two fire points, not one - a projectile thrown right has to spawn on the enemy's right
-    // side, or it would spawn on the left and immediately fly back through the enemy's own
-    // solid collider on its way past. Both need the same clearance: far enough outside the
-    // enemy's own collider that the projectile's own collider doesn't overlap it at spawn.
+    // Two fire points, not one: a projectile thrown right has to spawn on the enemy's right,
+    // or it flies back through the enemy's own collider on its way past. Both need enough
+    // clearance that the projectile's collider doesn't overlap the enemy's at spawn.
     [SerializeField] private Transform leftFirePoint;
     [SerializeField] private Transform rightFirePoint;
 
     [SerializeField] private float fireInterval = 3f;
 
-    // Which way the very first shot goes. Every shot after that alternates automatically -
-    // left, right, left, right... see Shoot().
+    // Which way the first shot goes. Every shot after it alternates - see Shoot().
     [SerializeField] private Direction startingDirection = Direction.Left;
 
     private float directionValue;
@@ -55,7 +55,6 @@ public class EnemyRangedAttack : MonoBehaviour
 
         Debug.Log("Enemy fired a projectile: " + gameObject.name + " (" + (directionValue < 0 ? "left" : "right") + ")");
 
-        // Flip for next time.
         directionValue = -directionValue;
     }
 }

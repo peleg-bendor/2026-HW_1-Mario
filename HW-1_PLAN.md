@@ -15,7 +15,7 @@ Shared working notes for building Exercise 1. The assistant may edit this file d
 
 ## Stage Order
 
-Mirrors `Course/Exercises/Exercise 01.md`'s own numbering, with a few added side-steps that aren't part of the exercise's own numbering: Stage 0 for cleanup/setup before any new feature work, Stage 2.5 once Stage 2 surfaced things worth fixing before building further on top of them, and Stage 10 (Game over / Game won GUI - Peleg's own addition, not asked for in the exercise text) inserted after Stage 9 and before the exercise's own bonus item. That pushes the bonus spawner to Stage 11, and adds two closing stages that aren't feature work at all: Stage 12 for a final jump-feel tuning pass plus one last full test, and Stage 13 for writing the video script.
+Mirrors `Course/Exercises/Exercise 01.md`'s own numbering, with a few added side-steps that aren't part of the exercise's own numbering: Stage 0 for cleanup/setup before any new feature work, Stage 2.5 once Stage 2 surfaced things worth fixing before building further on top of them, and Stage 10 (Game over / Game won GUI - Peleg's own addition, not asked for in the exercise text) inserted after Stage 9 and before the exercise's own bonus item. That pushes the bonus spawner to Stage 11, and adds three closing stages that aren't feature work at all: Stage 12 for a final jump-feel tuning pass plus one last full test, Stage 12.5 for a codebase-wide comment cleanup once Stage 13's design discussion made it clear how much code the video would put on screen, and Stage 13 for writing the video script.
 
 ### Stage 0 — Clean up & steady base `[x]`
 
@@ -49,7 +49,7 @@ Some scripts use the legacy `SC_` prefix, newer ones don't. Decide on one conven
 
 Beyond the known list above, scanned the rest of the inherited scripts for the same categories of issue: organization, useful/informative comments, logging, null checks, magic numbers. Noted anything found here before deciding what to change.
 
-**Done.** 13 findings reviewed and applied, plus a follow-up logging audit (7 more) and the `SC_Floor` landing-check rework — all in the Decisions Log below. `Coins Text` wired in the Inspector and confirmed working in Play mode; `SC_Floor`'s reworked landing check re-tested afterward and confirmed working. `BaseWeapon`/`TestBaseWeapon` kept (not deleted) with added explanatory comments.
+**Done.** 13 findings reviewed and applied, plus a follow-up logging audit (7 more) and the `SC_Floor` landing-check rework — all in the Decisions Log below. `Coins Text` wired in the Inspector and confirmed working in Play mode; `SC_Floor`'s reworked landing check re-tested afterward and confirmed working. `BaseWeapon`/`TestBaseWeapon` kept (not deleted) with added explanatory comments — since reversed, see Stage 12.5.
 
 #### Step 6 — Confirm the base is steady `[x]`
 
@@ -117,7 +117,7 @@ Not part of `Exercise 01.md`'s numbering (like Stage 0) — a pause between Pick
 
 #### Step 2 — Expand the level map `[x]`
 
-More floor tiles/room for the enemies, key/door, and final assembled level still to come. Floor grew from 14 to about 90 `Sprite_Floor` tiles, placed directly in the Editor. Tiles reorganized under a new `Tiles` child of `World` for Hierarchy tidiness. `World` (parent of Mario, every tile, and every pickup/hazard — everything except `Main Camera`) nudged `X +0.5` for visual alignment.
+More floor tiles/room for the enemies, key/door, and final assembled level still to come. Floor grew from 14 to 62 `Sprite_Floor` tiles, placed directly in the Editor. Tiles reorganized under a new `Tiles` child of `World` for Hierarchy tidiness. `World` (parent of Mario, every tile, and every pickup/hazard — everything except `Main Camera`) nudged `X +0.5` for visual alignment.
 
 **Confirmed working** by Peleg.
 
@@ -133,7 +133,7 @@ Start with 3, lose one per death, restart the game at 0.
 
 #### Step 1 — `StrikesManager` core logic `[x]`
 
-New `StrikesManager` (own GameObject under `Scripts` in the Hierarchy, mirrors `AxeCountManager`/`SelectedWeaponManager`'s shape) tracks `strikesRemaining`, subscribes to the existing `SC_Death.OnSpikeCollision` event independently of `PlayerDeath` (no changes needed to `PlayerDeath.cs` or `SC_Death.cs`), and reloads the scene once strikes hit 0. Fires a new static `OnStrikeCountChanged(int)` event for Stage 5's future GUI.
+New `StrikesManager` (own GameObject under `Scripts` in the Hierarchy, mirrors `AxeCountManager`/`SelectedWeaponManager`'s shape) tracks `strikesRemaining`, subscribes to the existing `SC_Death.OnSpikeCollision` event independently of `PlayerDeath` (no changes needed to `PlayerDeath.cs` or `SC_Death.cs`), and reloads the scene once strikes hit 0. Fires a new static `OnStrikeCountChanged(int)` event for Stage 5's future GUI. **Superseded by Stage 10:** `StrikesManager` no longer reloads anything — it fires an `OnGameOver` event and `GameEndManager` owns the reload.
 
 **Confirmed working** by Peleg via `OutputLogsTemp.txt`: two full playthroughs down to 0 strikes, both ending in a clean scene reload with no Console errors. The log also happened to prove the ordering fix from the design discussion was necessary, not just defensive: in the first playthrough's final hit, `StrikesManager`'s handler ran before `PlayerDeath`'s; in the second playthrough's final hit, the order flipped. Since the reload is deferred to `Update()` rather than firing inline from the event handler, both orders worked cleanly either way.
 
@@ -463,27 +463,113 @@ landed axe and an enemy's head deliberately don't count as ground.
 
 **Confirmed working** by Peleg directly in the Editor rather than via a pasted log.
 
+### Stage 12.5 — Side-step: comment convention pass `[x]`
+
+Not part of `Exercise 01.md`'s numbering (like Stage 0 and Stage 2.5). Started during Stage 13's
+design discussion, once it became clear the video puts a lot of code on screen and the comments
+were going to be read by the grader. Measured before deciding anything: 18 of 40 scripts had no
+comments at all, `EnemyMovement` was 22% comment lines, `CameraFollow` was the only file using
+`///`, and at least four different voices were in use (class summaries, field rationale,
+"this looks wrong but isn't" guards, and changelog notes about what the code used to do).
+
+#### Step 1 — Agree a convention `[x]`
+
+Eight rules, in the Decisions Log below.
+
+#### Step 2 — Apply it to all 40 scripts `[x]`
+
+Applied directly to the project files rather than via copy-paste blocks, at Peleg's request for
+this batch. Also removed the `BaseWeapon`/`LightningWeapon`/`TestBaseWeapon` LSP demo (see the
+log), renamed `TempInit` to `PlayerWeaponsSetup`, fixed `SC_Coin`'s log naming the player
+instead of the coin, and cleared out unused `using` statements project-wide.
+
+**Verified** by scripted check across all 40 files: every file has a header comment, no trailing
+comments, no `///`, no comment block over four lines, no references to `HW-1_PLAN.md` or to
+stage/lesson numbers, no unused `using`s, no missing `using`s, braces balanced.
+
 ### Stage 13 — Video script `[ ]`
 
 Write out the recording script/checklist covering every requirement, per the submission rules
-below. Brief agreed at the end of Stage 12:
+below.
+
+#### Step 1 — Design discussion `[x]`
+
+Standing brief, unchanged from the end of Stage 12:
 
 - Lives in a new `HW_1-Script.md`, written in English, dry tone, following `tropes.md` like
   everything else in this project.
-- The video runs 10 minutes at most, which is the real constraint here - there are 11 feature
-  stages plus SOLID commentary to fit, so the script has to budget time per section rather
-  than list everything worth saying.
 - The file has to separate spoken lines from stage directions clearly, so recording is reading
   rather than improvising: what to say out loud, and which file/GameObject/Console line to have
   on screen while saying it.
-- Structure: a short gameplay opener showing the game works at all, then one section per stage,
-  then a closing gameplay pass narrated live, naming what's happening on screen and tying it
-  back to the stage it came from.
-- Every stage section names the SOLID principle it demonstrates, since the exercise requires
-  showing all of them taught so far. The "Notes for the Video" section below already records
-  which principle belongs to which stage.
+- Every section names the SOLID principle it demonstrates, since the exercise requires showing
+  all of them taught so far.
+
+Settled during the discussion itself:
+
+- **15 minutes, not 10.** Raised by Peleg once the 10-minute budget showed that fitting ten
+  graded items plus SOLID meant roughly 45 seconds each including the code view. Script targets
+  13:50 recorded, leaving about a minute of slack for live narration running long.
+- **No cold-open gameplay.** The video opens on the level in the Scene view with Play not
+  pressed, saying gameplay comes at the end — Peleg's call, so the time goes to one proper
+  playthrough rather than two half ones.
+- **Play sessions get grouped, not one per item.** The expensive thing is entering Play mode
+  (the editor freezes for a moment, the same freeze behind Stage 11's timing bug), not switching
+  windows. So the shape is: show the code for a small group of items, then one Play session
+  demonstrating that whole group. Five Play presses instead of ten.
+- **Items 3, 4 and 5 share one section.** They are one continuous Play sequence (`Txt_Strikes`
+  at 3, lose one to spikes, walk into the pickup, touch it again at the cap, then die out to 0),
+  and splitting them would re-press Play three times to repeat the same setup. Each is still
+  called out by number out loud, so each stays identifiable.
+- **Item 9 and Stage 10 get code time but no demo of their own.** Item 9 is one sentence over
+  `CameraFollow.cs`; Stage 10 is a sentence or two over `GameEndManager`/`GameEndMessageManager`
+  saying it's Peleg's own addition rather than a requirement. Both are demonstrated by the
+  closing pass, which is two short games — one lost, one won — so both endings appear there.
+- **Section labels are spoken, not on-screen.** No title cards, no editing overhead; every
+  section opens with a literal "this is item four" sentence written into the script.
+- **The Console stays visible but mostly unmentioned.** Peleg's call: the logs are there as
+  supporting evidence for anyone who wants them, not something to narrate. Only two moments have
+  no visual alternative (the strike cap refusing at 3, the spawner reporting it's at cap), and
+  both also have a visible tell.
+- **Recording is per-part, edited together afterwards**, so each part is written as an
+  independent take with its own opening line and no continuity to preserve between parts.
 - Stage 0, Stage 2.5 and Stage 12 get no section of their own (none is a graded item), except
-  that the expanded map from Stage 2.5 is worth pointing at while showing the assembled level.
+  that the expanded map from Stage 2.5 is worth pointing at during the opening level tour.
+- Deliberately cut, given the budget: reading code aloud (one method per section, pointed at,
+  never read), `OutputLogsTemp.txt` and the testing history, Stage 0's cleanup findings, and the
+  `SC_` prefix explanation.
+
+Time budget, 15:00 cap, 13:50 target:
+
+| Part | Content | Time |
+| --- | --- | --- |
+| 1 | Intro + level tour in the Scene view, no Play | 1:00 |
+| 2A | Code: items 1 & 2 | 1:20 |
+| 2B | Play: items 1 & 2 | 1:20 |
+| 3A | Code: items 3, 4, 5 | 1:00 |
+| 3B | Play: items 3, 4, 5 | 1:10 |
+| 4A | Code: items 6, 7, bonus (incl. the `Task` timing story) | 1:35 |
+| 4B | Play: items 6, 7, bonus | 1:35 |
+| 5A | Code: item 8, item 9, Stage 10 | 1:10 |
+| 5B | Play: item 8 | 0:40 |
+| 6 | SOLID recap, all five named with files on screen | 1:00 |
+| 7 | Closing pass: two games, one lost, one won | 1:50 |
+| 8 | Sign-off | 0:10 |
+
+SOLID assignments — every principle has one section as its primary home, with repeats where
+they genuinely occur:
+
+| Principle | Primary | Also appears in |
+| --- | --- | --- |
+| SRP | Item 8 (`Gateway`/`Portal` split along the collider line) | Item 1, items 3–5, item 9 |
+| OCP | Item 7 (a second enemy type needed zero changes to `EnemyHealth`, `IEnemy` or either projectile) | Bonus (one `EnemySpawner` configured by data, not subclassed) |
+| LSP | SOLID recap (`WeaponsHandler` over `List<IWeapon>`; `IPowerUp`'s three implementers) | Item 2 |
+| ISP | Item 6 (`IEnemy` stays at `Kill()`; touch damage is a separate `SC_Death` attachment) | Item 2 |
+| DIP | Item 2 (`AxePowerUp` → `IReloadWeapon`, `FireFlowerPowerUp` → `IUseableWeapon`) | SOLID recap |
+
+#### Step 2 — Write `HW_1-Script.md` `[ ]`
+
+Section-by-section outline with the walking route through the level first, then the spoken
+lines.
 
 ## Notes / Decisions Log
 
@@ -493,7 +579,7 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
 - `WeaponsHandler.index` (which weapon Left-Ctrl fires) stays hardcoded for now; fixing it properly is part of the Pickable Axe stage, since that stage changes how weapons get registered anyway.
 - Stage 2 design decisions (Pickable Axe):
     - `AxePowerUp` will look up `IReloadWeapon` (interface), not the concrete `AxeWeapon` type — matches the `FireFlowerPowerUp`/`IUseableWeapon` fix from Stage 0. This is the ISP/DIP point in practice: `AxePowerUp` only needs "can this be reloaded," not the whole concrete weapon.
-    - The axe becomes a real stockpile: `AxeWeapon._loaded` (bool) is replaced by `axesHeld` (int, starts at `0`). `Reload()` now only means "gained an axe" and is called exclusively from the pickup path — the old Q-key manual reload in `TempInit` is removed.
+    - The axe becomes a real stockpile: `AxeWeapon._loaded` (bool) is replaced by `axesHeld` (int, starts at `1` — see the separate note below on why Mario begins holding one). `Reload()` now only means "gained an axe" and is called exclusively from the pickup path — the old Q-key manual reload in `TempInit` is removed.
     - Considered splitting `ProjectileAxe`'s throw force into separate classes the way `PlayerMovement`/`PlayerJump` are split — rejected. That split exists because movement and jumping already had two independent reasons to change (different keys, different persistent state). The axe's throw is one physical event (a single `AddForce` with both components); there's no independent axis of change to split along.
     - `WeaponsHandler.index` fix, revised: first considered giving the axe and fireball their own dedicated attack keys (dropping `index` entirely), but reconsidered after re-reading the original code. `index` was a bare `public int` over a generic `List<IWeapon>`, with no method anywhere to change it and no call to `UnEquip()` anywhere either — that shape reads as "one active/selected weapon," not "every weapon independently attackable." Went with keeping that shape and actually finishing it: `WeaponsHandler` keeps `List<IWeapon>` + a private `selectedIndex`, Left-Ctrl attacks the selection, `Q` (freed up now that axe reload no longer needs it) cycles to the next weapon in the list that's actually available. Needed `IWeapon.IsAvailable()` for this — added to the base interface rather than a segregated one, since (unlike `Reload()`/`Equip()`) every weapon the handler manages must be able to answer it for cycling to work at all.
     - `FireFlowerController`'s trigger-detect-and-hand-off shape is being copied directly for `AxePickupController` rather than generalized into a shared base class now — two instances isn't enough to justify the abstraction yet. Revisit once Pickable Strike (Stage 4) makes it a third.
@@ -514,7 +600,7 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - Logging cleanup: `SC_Coin`/`FireFlowerController` were both trigger callbacks logging the string `"OnCollisionEnter2D"` (copy-paste leftover) — fixed to `"OnTriggerEnter2D"`. Generic `"Mario Collision!"` lines replaced with per-script messages (`"Coin collected: ..."`, `"Mario hit spikes"`, `"Mario landed on floor"` / `"...from the side"`, `"Fire flower collected"`).
     - `SC_Death.cs`: removed the dead commented-out `SC_Player`/`ResetMarioPosition()` reference.
     - `LaserWeapon.cs` deleted (script + `.meta`) — unused stub, not attached to any GameObject, not required by the exercise.
-    - `BaseWeapon`/`TestBaseWeapon` (the LSP demo) — **resolved: keeping it**, since it's the only place in the codebase demonstrating LSP and the exercise requires showing all SOLID principles taught so far. Added explanatory comments to both files (why this exists, what it proves, how it differs from the real `IWeapon` system) instead of deleting. Also dropped `TestBaseWeapon`'s empty, auto-generated `Update()` method (did nothing, just noise) while in there. Nothing to build for the video beyond narrating the Console output when the scene starts.
+    - (Reversed in Stage 12.5 — both files and the scene GameObject are gone. The reasoning below held only while nothing else in the codebase was read as demonstrating LSP.) `BaseWeapon`/`TestBaseWeapon` (the LSP demo) — **resolved: keeping it**, since it's the only place in the codebase demonstrating LSP and the exercise requires showing all SOLID principles taught so far. Added explanatory comments to both files (why this exists, what it proves, how it differs from the real `IWeapon` system) instead of deleting. Also dropped `TestBaseWeapon`'s empty, auto-generated `Update()` method (did nothing, just noise) while in there. Nothing to build for the video beyond narrating the Console output when the scene starts.
 - Stage 0 logging audit (7 findings, all approved and applied):
     - `PlayerJump.Jump()` now logs `"Mario jumped"` on an actual jump.
     - `PlayerDeath.OnSpikeCollision()` now logs `"Mario respawned at start position"` (message will need revisiting once the Stage 3 lives system exists).
@@ -524,7 +610,7 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - Left silent on purpose: `ProjectileAxe`/`ProjectileFireball.Attack()` (would duplicate the weapon-level log), `PlayerMovement` (continuous per-frame state, not a discrete transition), `SC_Death`'s unused `OnSpikeCollisionGeneral` branch (nothing subscribes to it yet).
 - IDE flagged `col.gameObject.tag == "Player"` (used throughout) as slightly less efficient than `CompareTag`. Decided to leave as-is — negligible real-world cost for this project's scale, not worth touching.
 - Stage 2.5 Step 1 (`SC_Floor` repeated-landing log): Peleg first asked whether just tweaking comments would be enough. It wouldn't — the noise is `Debug.Log` actually firing on every tile crossing during a walk, and comments don't run, so they can't change what shows up in the Console or the video. Root cause stays as diagnosed: the floor is 14 separate tile colliders, so walking across a tile boundary re-triggers `OnCollisionEnter2D` even though Mario never left the ground. Fix: `SC_Floor` still detects "landed on top vs. bumped the side" per collision and still raises `OnFloorCollision` on every top-touch — that detection is correct, since it genuinely is a new tile each time — but it no longer decides whether that's log-worthy. `PlayerJump.OnFloorCollision()` already tracks `isJumping`, so it now only logs `"Mario landed on floor"` (and only resets `isJumping`) when `isJumping` was actually `true` — a real post-jump landing, not a walking step. Also removed `SC_Floor`'s unconditional `Debug.Log("OnCollisionEnter2D " + ...)`, which logged every collision regardless of tag — a separate leftover from before the `Player`-tag check existed, same noisy symptom. Left the identical pattern in `SC_Death.cs`/`ProjectileAxe.cs` alone (out of scope here) and left `SC_Floor`'s "touched from the side" log alone (never reported as noisy). Merging the 14 tile colliders into fewer/one — which would fix the repeated `OnCollisionEnter2D` calls at the source instead of just their logging — deferred to Step 2's map-expansion work rather than done twice.
-- Stage 2.5 Step 2 (map expansion): floor grew from 14 to about 90 `Sprite_Floor` tiles (still plain prefab instances on a 1-unit grid, not a Tilemap — each tile's `BoxCollider2D` footprint is `1x1` even though its `SpriteRenderer` draws slightly larger at `2.04x2.04` to hide seams, so new tiles need to land exactly 1 unit apart). Tiles moved under a new `Tiles` child of `World` for organization — safe because nothing in `Assets/Scripts` looks up objects by hierarchy path or name (confirmed by search), so reparenting doesn't risk breaking anything, and dragging in the Hierarchy preserves world position automatically. Separately, `World` itself (parent of Mario, every tile, and every pickup/hazard — everything except `Main Camera`) was moved `X +0.5` for visual alignment. Confirmed safe against `PlayerDeath`'s respawn: `startPosition` (`PlayerDeath.cs:18`) is captured live from `transform.position` in `Awake()`, not hardcoded, so it automatically follows wherever Mario's `Transform` actually ends up. Note: `Main Camera` is not a child of `World`, so its fixed framing sits `0.5` unit off from the level now; harmless since camera-follow isn't wired up until Stage 9, but worth knowing if the framing ever looks slightly off before then.
+- Stage 2.5 Step 2 (map expansion): floor grew from 14 to 62 `Sprite_Floor` tiles (counted from `Scene_Physics.unity` directly during Stage 12.5; the "about 90" figure this note originally carried was an estimate that never got checked) (still plain prefab instances on a 1-unit grid, not a Tilemap — each tile's `BoxCollider2D` footprint is `1x1` even though its `SpriteRenderer` draws slightly larger at `2.04x2.04` to hide seams, so new tiles need to land exactly 1 unit apart). Tiles moved under a new `Tiles` child of `World` for organization — safe because nothing in `Assets/Scripts` looks up objects by hierarchy path or name (confirmed by search), so reparenting doesn't risk breaking anything, and dragging in the Hierarchy preserves world position automatically. Separately, `World` itself (parent of Mario, every tile, and every pickup/hazard — everything except `Main Camera`) was moved `X +0.5` for visual alignment. Confirmed safe against `PlayerDeath`'s respawn: `startPosition` (`PlayerDeath.cs:18`) is captured live from `transform.position` in `Awake()`, not hardcoded, so it automatically follows wherever Mario's `Transform` actually ends up. Note: `Main Camera` is not a child of `World`, so its fixed framing sits `0.5` unit off from the level now; harmless since camera-follow isn't wired up until Stage 9, but worth knowing if the framing ever looks slightly off before then.
 - Stage 3 design decisions (Lives/Strikes):
     - `StrikesManager` is a new, independent subscriber to `SC_Death.OnSpikeCollision`, alongside `PlayerDeath` — neither class knows the other exists. `PlayerDeath` keeps its existing unconditional reposition-on-hit behavior unchanged; `StrikesManager` owns strike bookkeeping and the game-over/restart decision. Kept them separate rather than folding strike-counting into `PlayerDeath`, since "reposition Mario" and "track lives, end the game" are genuinely two different responsibilities.
     - "Restart" means reloading `Scene_Physics.unity` (`SceneManager.LoadScene`) rather than hand-resetting each piece of state (position, coins, axes held, weapon selection) — a full reload gets all of that for free and is a more literal match for "the game ends and restarts" anyway. No Build Settings changes needed since it's still the sole scene.
@@ -615,6 +701,15 @@ _(append entries here as we make design decisions, e.g. "Chose to model lives vi
     - Braking applies in the air as well as on the ground, Peleg's call after weighing both. Grounded-only would preserve a running jump's forward momentum, but `PlayerMovement` would then need its own per-frame ground check, which is exactly the flakiness Step 1 was designed to avoid and Stage 6 spent three revisions on. `Linear Damping` at `5` was already eating most airborne momentum anyway, so the simple version turned out to cost nothing that was there to lose.
     - `EnemySpawner`'s dual-clock timing suffix (`" at 2.985s game / 8.722s real"`, plus the `Stopwatch` field and `TimingSuffix()` behind it) removed at Peleg's request while finishing this stage - it was instrumentation for Stage 11's timing investigation, that investigation is written up above, and it read as debug output in a Console about to be recorded. `WaitGameSecondsAsync` itself is untouched, since that's the fix rather than the instrumentation, and each log line still names its owning GameObject, which is what made the `Canvas`-instead-of-`Sprite_Grave` mistake a quick diagnosis.
 
+- Stage 12.5 design decisions (comment convention):
+    - The convention, eight rules: (1) comment why, never what; (2) every file gets a header comment above the class or interface, `//` not `///`, saying what the thing is for and what it deliberately isn't; (3) comment a field only when the value or its existence is non-obvious; (4) comment a branch only when a reader would plausibly delete it; (5) four lines maximum, standing on its own; (6) no changelog voice — state what's true now, not what the code used to do; (7) no trailing comments; (8) never repeat a value the code or the scene already holds.
+    - Rule 5 originally allowed offloading the long stories to a pointer (`ProjectileGarlic` already had "see `HW-1_PLAN.md`'s Stage 7 decisions"). Peleg's call to ban plan and stage references from code outright, which forced the harder question: can the two longest comments survive without one? They can, because rule 6 was already removing the expensive part. `EnemyMovement`'s grounding paragraph and `EnemySpawner`'s `Task.Delay` comment were both investigations that took days; the *reasons* they landed on are three or four lines each. The narrative belongs in this file and in git, not in the code.
+    - Rule 8 came from Peleg noticing the stale tile counts. Three separate comments hardcoded how many floor tiles the level has (one said 14, two said ~90; the real answer is 62), which is a number the scene owns and a comment can only ever get wrong. Generalized from "fix these three" to "a comment never restates a value that lives somewhere else" — so `MinVerticalContactNormal`'s comment now explains that the cutoff sits at 60 degrees off vertical without repeating the `0.5`.
+    - `BaseWeapon`/`LightningWeapon`/`TestBaseWeapon` deleted, reversing the Stage 0 decision to keep them. They were a standalone demo with no gameplay attached, kept only because they looked like the codebase's sole LSP example. They weren't: `WeaponsHandler` holds a `List<IWeapon>` and calls `Attack()`/`IsAvailable()` without knowing the concrete types, and `AxeWeapon`/`FireballWeapon` both stand in for `IWeapon` without breaking it — `FireballWeapon.IsAvailable()` returning `false` before the Fire Flower is honoring the contract, not dodging it. The sharper version of the same point: `Reload()` sits on `IReloadWeapon` and `Equip()` on `IUseableWeapon` *specifically so* LSP isn't violated, since putting either on `IWeapon` would force the other weapon into a method that throws or silently does nothing. `IPowerUp` is a second instance, with `StrikePowerUp` proving substitutability the hard way by ignoring the `player` argument entirely while still honoring the contract. So the video argues LSP from the real weapon system rather than conceding a gap.
+    - `TempInit` renamed to `PlayerWeaponsSetup`. The name came from Lesson 4 and was always wrong — it is the only caller of `WeaponsHandler.AddWeapon()` anywhere in the project, so it is the weapon registration step rather than temporary scaffolding. Deleting it (Peleg's first instinct) would have left no weapons registered at all: Left-Ctrl and `Q` would both stop working. Folding it into `WeaponsHandler` was the other option, rejected because it would give that class both registration and dispatch right before a video arguing for SRP.
+    - Unused `using` statements cleared project-wide in the same pass. `IWeapon`/`IReloadWeapon`/`IUseableWeapon` all imported `UnityEngine` without using a single Unity type, `SC_Death` imported `UnityEngine.AI`, `SC_Coin` imported `UnityEngine.U2D` and both `System.Collections` namespaces. Not strictly comment work, but it is the first thing on screen when a file is scrolled to on camera, and it is the same inconsistency problem.
+    - Applied as direct file edits rather than copy-paste blocks, a deliberate one-time departure from this project's normal working rule — 40 files was too many to hand over one at a time, and the changes were mechanical enough to review as a diff. Committed separately from the deletions and the rename so the comment pass could be thrown away cleanly on its own.
+
 ## Notes for the Video
 
 _(build this up per stage, so recording at the end is just following a checklist rather than a scramble to remember what to show)_
@@ -635,4 +730,5 @@ _(build this up per stage, so recording at the end is just following a checklist
     - Final level + camera follow: show the camera tracking Mario on both axes across the level's platforms - flat ground, the staircase climbs on the left and right ends, the two big elevated shelves - and confirm it stays smooth rather than snapping. Worth narrating that this is a genuinely assembled level, not a fresh test scene: every mechanic from every earlier stage already lives in this one map. Worth noting `CameraFollow` as a small, single-purpose SRP example, and that the World-offset issue flagged back in Stage 2.5 resolved itself once the camera reads Mario's live position instead of a fixed number.
     - Game over / Game won GUI: show a normal death down to 0 strikes - red "GAME OVER" on screen for about a second right after the level restarts; show reaching the portal with the key already collected - green "GAME WON" the same way. Worth narrating that the message intentionally shows after the reload rather than before it (SRP point: `GameEndManager` only ever decides *which* outcome happened and reloads immediately, same as `StrikesManager`/`Portal` always did; `GameEndMessageManager` owns displaying it, on its own timer, entirely decoupled from the reload). Also worth a line on the tie-break: reaching the portal and losing the last strike on the same frame is handled explicitly (win always wins), not left to whichever collision Unity happens to process first.
     - Bonus spawner: show `Sprite_Grave` in the level with no ghosts around it at the start, then ghosts appearing from it one at a time on a steady 3-second beat up to the cap of 3; kill one with a fireball or axe and show the next one arriving to refill the slot, with the Console's `"Enemy spawn skipped - already at cap (3)"` visible while the level is full. Two things worth narrating deliberately. First, this is an intentional reinterpretation of the bonus item rather than a literal one: the exercise says destroyed enemies come back after X seconds, and this instead keeps a steady population topped up to a cap, which reads better in play and means the spawner never needs to know how or whether any particular enemy died. Second, the `Task` timing story, which is the most interesting thing in this stage - it's built on Lesson 5's own `EnemySpawner.cs` (`async`/`await`/`CancellationTokenSource`), but `Task.Delay` had to go, because it counts real time and kept running while the editor sat frozen at startup, so the first two ghosts arrived on screen almost together. Show `WaitGameSecondsAsync` and explain that it only advances while frames are actually rendering. Good place to note this is exactly what the Lesson 5 slides mean by filing timed events under coroutines, and that the fix amounts to hand-building what `WaitForSeconds` gives for free. Also worth a line on the single-class design: one `EnemySpawner` configured by Inspector fields rather than a `Spawner`/`GhostSpawner` hierarchy, since a second spawner would differ only in which prefab it points at, and that's data rather than behavior.
-    - Stage 12: not a graded item on its own, so no dedicated segment. The tighter stopping and the fixed wall-stick will just be visible throughout whatever else gets recorded. Two optional narration lines if there's room: Mario can no longer jump out of a fall he walked into, because `PlayerJump`'s flag was tracking "has an unfinished jump" rather than "is airborne"; and the ground check samples once on key press instead of every frame, which is the direct lesson from the ghost's grounding troubles on a floor made of ~90 separate tile colliders.
+    - Stage 12: not a graded item on its own, so no dedicated segment. The tighter stopping and the fixed wall-stick will just be visible throughout whatever else gets recorded. Two optional narration lines if there's room: Mario can no longer jump out of a fall he walked into, because `PlayerJump`'s flag was tracking "has an unfinished jump" rather than "is airborne"; and the ground check samples once on key press instead of every frame, which is the direct lesson from the ghost's grounding troubles on a floor made of many separate tile colliders.
+    - Stage 12.5: not a graded item on its own, so no dedicated segment - but it is the reason the code looks the way it does on camera, so any file opened during the video should read consistently. The one place it changed what gets *said* is LSP: with `BaseWeapon`/`TestBaseWeapon` gone, the SOLID recap argues LSP from `WeaponsHandler` iterating `List<IWeapon>` and from `PlayerPowerUp.CollectPowerUp(IPowerUp)` taking any of the three power-ups, with the interface split (`Reload()` on `IReloadWeapon`, `Equip()` on `IUseableWeapon`) as the sharper point: they live on separate interfaces precisely so neither weapon is ever forced into a method it would have to throw from or silently ignore.

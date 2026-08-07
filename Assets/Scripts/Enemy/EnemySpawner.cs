@@ -3,20 +3,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-// Spawns a configured enemy prefab on a repeating timer, capped at how many of its own
-// spawned instances are still alive. Doesn't know or care what kind of enemy it's making -
-// a second spawner for a different enemy later is just a second GameObject running this same
-// script with a different Inspector-assigned prefab, not a subclass.
+// Spawns a configured enemy prefab on a repeating timer, capped at how many of its own spawns
+// are still alive. It never learns what kind of enemy it makes, so a spawner for a different
+// enemy is another GameObject running this same script with a different prefab, not a subclass.
 public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private GameObject enemyPrefab;
     [SerializeField] private float spawnInterval = 3f;
     [SerializeField] private int maxAlive = 3;
 
-    // What this spawner has made that's still alive. Pruned of destroyed entries before every
-    // cap check instead of tracked via an event - a spawned enemy dying however it dies (axe,
-    // fireball, anything added later) just quietly stops counting, with no need for this
-    // script to know how enemies die or to be notified about it.
+    // What this spawner has made that is still alive, pruned before every cap check rather than
+    // tracked by a death event. An enemy dying however it dies just stops counting, so nothing
+    // here needs to know how enemies die or be told when one does.
     private readonly List<GameObject> spawned = new List<GameObject>();
 
     private CancellationTokenSource cancellationTokenSource;
@@ -31,9 +29,8 @@ public class EnemySpawner : MonoBehaviour
         cancellationTokenSource?.Cancel();
     }
 
-    // async void (not async Task) because Start() is a synchronous Unity lifecycle method and
-    // can't await anything - same reasoning Lesson 5's own EnemySpawner.cs uses for the same
-    // shape of call.
+    // async void rather than async Task because Start() is a synchronous Unity lifecycle method
+    // and has nothing to await this with.
     private async void StartSpawning()
     {
         cancellationTokenSource = new CancellationTokenSource();
@@ -43,9 +40,9 @@ public class EnemySpawner : MonoBehaviour
         }
         catch (System.OperationCanceledException)
         {
-            // Expected every time the scene reloads - OnDestroy() cancels the token on the way
-            // out. Not an error, so it doesn't go through Debug.LogError below; a spawner
-            // "erroring" on every ordinary game-over/game-won reload would be misleading noise.
+            // Expected on every scene reload, since OnDestroy cancels the token on the way out.
+            // Logged rather than reported as an error, because a spawner "failing" every time
+            // the game restarts would be misleading noise.
             Debug.Log("Enemy spawner stopped: " + gameObject.name);
         }
         catch (System.Exception ex)
@@ -56,8 +53,8 @@ public class EnemySpawner : MonoBehaviour
 
     private async Task SpawnLoopAsync(CancellationToken cancellationToken)
     {
-        // Spawns immediately on entry, then waits - not the other way around - so the level
-        // doesn't sit at zero spawned enemies for the first interval after it loads.
+        // Spawns on entry and then waits, rather than the other way around, so the level doesn't
+        // sit empty for a whole interval after it loads.
         while (this != null && !cancellationToken.IsCancellationRequested)
         {
             TrySpawn();
@@ -65,13 +62,10 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
-    // Waits in Unity's own game time rather than real time, which is what Task.Delay would do.
-    // Task.Delay keeps counting real seconds even while the game isn't running a single frame,
-    // and the editor can sit frozen for seconds right after Play is pressed while it warms up.
-    // A delay that expires during that freeze is already spent by the time anything reaches the
-    // screen, so the first two spawns appeared almost together no matter what the interval was
-    // set to. Counting frames the game actually ran fixes that at the source: this only
-    // advances while there is something to see.
+    // Waits in game time rather than real time. Task.Delay would keep counting real seconds
+    // while the game isn't rendering a single frame, and the editor sits frozen for a moment
+    // right after Play is pressed - long enough that the first wait was mostly spent before
+    // anything reached the screen. Counting only frames the game actually ran fixes that.
     private async Task WaitGameSecondsAsync(float seconds, CancellationToken cancellationToken)
     {
         float elapsed = 0f;
@@ -79,8 +73,8 @@ public class EnemySpawner : MonoBehaviour
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Task.Yield resumes on Unity's main thread on the next frame, so this loop runs
-            // once per rendered frame and stalls completely whenever the game does.
+            // Task.Yield resumes on Unity's main thread next frame, so this loop runs once per
+            // rendered frame and stalls completely whenever the game does.
             await Task.Yield();
 
             if (this == null)

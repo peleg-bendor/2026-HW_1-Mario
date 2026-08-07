@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+// Drives Mario's horizontal movement and which way his sprite faces. Jumping is PlayerJump's
+// job: the two are split because they answer to different keys, and only one of them carries
+// state from one frame to the next.
 public class PlayerMovement : MonoBehaviour
 {
     private float direction;
@@ -44,11 +47,10 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            // Brake to an actual stop. Rigidbody2D's Linear Damping decays velocity exponentially,
-            // so it approaches zero without ever arriving and Mario keeps drifting - that drift is
-            // the "slippery" feel. MoveTowards is linear, so it reaches zero and stays there.
-            // Applied in the air too, deliberately: keeping it grounded-only would mean a per-frame
-            // ground check here, which is the flakiness Stage 6 spent three revisions on.
+            // Brake to a real stop. Rigidbody2D's Linear Damping decays velocity exponentially,
+            // so it approaches zero without arriving and Mario keeps drifting - that drift is
+            // what "slippery" meant. MoveTowards is linear, so it reaches zero and stays there.
+            // Braking in the air as well is what keeps a ground check out of this class.
             float brakedX = Mathf.MoveTowards(rigid.linearVelocity.x, 0f, deceleration * Time.fixedDeltaTime);
             rigid.linearVelocity = new Vector2(brakedX, rigid.linearVelocity.y);
         }
