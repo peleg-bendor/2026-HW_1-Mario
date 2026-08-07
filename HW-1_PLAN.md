@@ -465,8 +465,25 @@ landed axe and an enemy's head deliberately don't count as ground.
 
 ### Stage 13 — Video script `[ ]`
 
-Write out the recording script/checklist covering every requirement, per the submission
-rules below.
+Write out the recording script/checklist covering every requirement, per the submission rules
+below. Brief agreed at the end of Stage 12:
+
+- Lives in a new `HW_1-Script.md`, written in English, dry tone, following `tropes.md` like
+  everything else in this project.
+- The video runs 10 minutes at most, which is the real constraint here - there are 11 feature
+  stages plus SOLID commentary to fit, so the script has to budget time per section rather
+  than list everything worth saying.
+- The file has to separate spoken lines from stage directions clearly, so recording is reading
+  rather than improvising: what to say out loud, and which file/GameObject/Console line to have
+  on screen while saying it.
+- Structure: a short gameplay opener showing the game works at all, then one section per stage,
+  then a closing gameplay pass narrated live, naming what's happening on screen and tying it
+  back to the stage it came from.
+- Every stage section names the SOLID principle it demonstrates, since the exercise requires
+  showing all of them taught so far. The "Notes for the Video" section below already records
+  which principle belongs to which stage.
+- Stage 0, Stage 2.5 and Stage 12 get no section of their own (none is a graded item), except
+  that the expanded map from Stage 2.5 is worth pointing at while showing the assembled level.
 
 ## Notes / Decisions Log
 

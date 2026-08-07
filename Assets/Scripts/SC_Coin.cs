@@ -12,7 +12,9 @@ public class SC_Coin : MonoBehaviour
     {
         if (col.gameObject.tag == "Player")
         {
-            Debug.Log("Coin collected: " + col.gameObject.name);
+            // Names this coin, not the player who walked into it - col.gameObject is Mario,
+            // so the old version logged "Coin collected: Sprite_Mario" on every pickup.
+            Debug.Log("Coin collected: " + gameObject.name);
             if (OnCoinCollision != null)
                 OnCoinCollision();
 
